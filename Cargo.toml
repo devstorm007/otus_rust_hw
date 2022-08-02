@@ -2,5 +2,6 @@
 
 members = [
     "house",
-    "tcp",
+    "house_server",
+    "tcp_exchange",
 ]

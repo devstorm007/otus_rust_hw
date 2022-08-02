@@ -5,8 +5,10 @@
       <sourceFolder url="file://$MODULE_DIR$/house/examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/house/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/house/tests" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/tcp/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/tcp/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/house_server/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/house_server/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/tcp_exchange/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/tcp_exchange/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />
