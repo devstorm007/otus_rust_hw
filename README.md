@@ -1,1 +1,3 @@
-# otus_rust_hw
+# otus rust course
+
+## homework

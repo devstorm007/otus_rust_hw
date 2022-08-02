@@ -3,7 +3,7 @@ use std::thread;
 
 use threadpool::ThreadPool;
 
-use tcp_exchange::domain::{Message, NotifyMessage};
+use tcp_exchange::domain::Message;
 use tcp_exchange::tcp_server::TcpServer;
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -35,8 +35,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                                 );
                             })
                         }
-                        Err(error) => eprintln!(
-                            "server: bad decoding from client '{}' failed: {error:?}",
+                        Err(_error) => eprintln!(
+                            "server: bad decoding from client '{}' failed: {_error:?}",
                             notify.address
                         ),
                     }
