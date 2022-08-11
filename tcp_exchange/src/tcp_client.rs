@@ -7,12 +7,13 @@ use std::sync::mpsc::{channel, Receiver, Sender};
 use threadpool::ThreadPool;
 
 use crate::domain::*;
-use crate::error::ProcessError;
-use crate::error::ProcessError::SendNotifyError;
+use crate::error::TcpExchangeError;
+use crate::error::TcpExchangeError::SendNotifyError;
 use crate::tcp_protocol::{decode_bytes, encode_bytes};
 
 pub struct TcpClient {
   pub address: SocketAddr,
+  pub server_address: SocketAddr,
   pub messages: Receiver<Message>,
   send_stream: TcpStream,
 }
@@ -21,9 +22,9 @@ impl TcpClient {
   pub fn connect<T: ToSocketAddrs>(
     address: T,
     pool: &ThreadPool,
-  ) -> Result<TcpClient, ProcessError> {
+  ) -> Result<TcpClient, TcpExchangeError> {
     let stream = TcpStream::connect(address)?;
-    let server_address = stream.peer_addr()?;
+    let server_address: SocketAddr = stream.peer_addr()?;
     let client_address = stream.local_addr()?;
 
     let (message_notifier_tx, message_notifier_rx) = channel();
@@ -46,6 +47,7 @@ impl TcpClient {
 
     Ok(TcpClient {
       address: client_address,
+      server_address,
       messages: message_notifier_rx,
       send_stream,
     })
@@ -55,7 +57,7 @@ impl TcpClient {
     mut byte_stream: Bytes<TcpStream>,
     server_address: SocketAddr,
     message_notifier_tx: Sender<Message>,
-  ) -> Result<(), ProcessError> {
+  ) -> Result<(), TcpExchangeError> {
     message_notifier_tx
       .send(Message::Connected)
       .map_err(|e| SendNotifyError(server_address, e.to_string()))?;
@@ -71,8 +73,16 @@ impl TcpClient {
       .map_err(|e| SendNotifyError(server_address, e.to_string()))
   }
 
-  pub fn send(&mut self, bytes: &[u8]) -> Result<(), io::Error> {
+  pub fn send(&mut self, bytes: &[u8]) -> io::Result<()> {
+    TcpClient::send_by_stream(&mut self.send_stream, bytes)
+  }
+
+  pub fn send_by_stream(stream: &mut TcpStream, bytes: &[u8]) -> io::Result<()> {
     let encoded = &encode_bytes(bytes);
-    self.send_stream.write_all(encoded)
+    stream.write_all(encoded)
+  }
+
+  pub fn clone_stream(&self) -> io::Result<TcpStream> {
+    self.send_stream.try_clone()
   }
 }

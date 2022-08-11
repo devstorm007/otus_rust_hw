@@ -8,8 +8,8 @@ use std::sync::mpsc::{channel, Receiver, Sender};
 use threadpool::ThreadPool;
 
 use crate::domain::*;
-use crate::error::ProcessError;
-use crate::error::ProcessError::SendNotifyError;
+use crate::error::TcpExchangeError;
+use crate::error::TcpExchangeError::SendNotifyError;
 use crate::tcp_protocol::{decode_bytes, encode_bytes};
 
 pub struct TcpServer {
@@ -21,7 +21,7 @@ impl TcpServer {
   pub fn start<Addrs: ToSocketAddrs>(
     address: Addrs,
     pool: &ThreadPool,
-  ) -> Result<TcpServer, ProcessError> {
+  ) -> Result<TcpServer, TcpExchangeError> {
     let listener = TcpListener::bind(address)?;
     let server_address = listener.local_addr()?;
 
@@ -63,7 +63,7 @@ impl TcpServer {
     client_address: SocketAddr,
     message_notifier_tx: Sender<NotifyMessage>,
     pool: &ThreadPool,
-  ) -> Result<(), ProcessError> {
+  ) -> Result<(), TcpExchangeError> {
     let (client_sender_tx, client_sender_rx) = channel::<Vec<u8>>();
 
     let send_client_stream = client_stream.try_clone()?;
@@ -117,7 +117,7 @@ impl TcpServer {
     client_address: SocketAddr,
     client_sender_tx: Sender<Vec<u8>>,
     message_notifier_tx: Sender<NotifyMessage>,
-  ) -> Result<(), ProcessError> {
+  ) -> Result<(), TcpExchangeError> {
     while let Ok(message) = decode_bytes(&mut client_bytes) {
       message_notifier_tx
         .send(NotifyMessage::new(

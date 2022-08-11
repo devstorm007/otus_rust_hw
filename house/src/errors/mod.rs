@@ -1,1 +1,1 @@
-pub mod app_error;
+pub mod intelligent_house_error;

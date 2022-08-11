@@ -4,7 +4,7 @@ use std::net::SocketAddr;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
-pub enum ProcessError {
+pub enum TcpExchangeError {
   #[error("Unexpected connect error")]
   ConnectError,
   #[error("IO error: {0}")]

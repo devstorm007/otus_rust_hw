@@ -1,6 +1,6 @@
-use anyhow::Result;
+//use anyhow::Result;
 
-use crate::errors::app_error::InventoryError;
+use crate::errors::intelligent_house_error::InventoryError;
 use crate::house::intelligent_house::*;
 use crate::DeviceItem;
 
@@ -26,5 +26,12 @@ pub trait DeviceInventory {
     &self,
     room_name: &RoomName,
     device_name: &DeviceName,
+  ) -> Result<(), InventoryError>;
+
+  fn change_device(
+    &mut self,
+    room_name: &RoomName,
+    device_name: &DeviceName,
+    modify: impl Fn(DeviceItem) -> Result<DeviceItem, InventoryError>,
   ) -> Result<(), InventoryError>;
 }

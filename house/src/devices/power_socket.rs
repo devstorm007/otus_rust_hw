@@ -10,6 +10,9 @@ pub struct PowerSocket {
 }
 
 impl PowerSocket {
+  pub fn power(self) -> u32 {
+    self.voltage * self.current
+  }
   pub fn enable(&mut self) {
     self.enabled = true;
   }
@@ -36,12 +39,14 @@ impl DeviceInfo for PowerSocket {
                 - type {:?}
                 - voltage={}
                 - current={}
-                - enabled={}",
+                - enabled={}
+                - power={}",
       device_name.0,
       &self.tpe,
       &self.voltage.to_string().as_str(),
       &self.current.to_string().as_str(),
       &self.enabled.to_string().as_str(),
+      &self.power().to_string().as_str(),
     )
   }
 }

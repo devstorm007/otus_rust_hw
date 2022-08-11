@@ -1,8 +1,8 @@
 use std::net::SocketAddr;
 use std::sync::mpsc::Sender;
 
-use crate::error::ProcessError;
-use crate::error::ProcessError::SendNotifyError;
+use crate::error::TcpExchangeError;
+use crate::error::TcpExchangeError::SendNotifyError;
 
 pub enum Message {
   Connected,
@@ -13,7 +13,7 @@ pub enum Message {
 pub struct NotifyMessage {
   pub message: Message,
   pub address: SocketAddr,
-  pub message_sender_tx: Sender<Vec<u8>>,
+  message_sender_tx: Sender<Vec<u8>>,
 }
 
 impl NotifyMessage {
@@ -25,20 +25,10 @@ impl NotifyMessage {
     }
   }
 
-  pub fn reply(&self, msg: Vec<u8>) -> Result<(), ProcessError> {
+  pub fn reply(&self, msg: Vec<u8>) -> Result<(), TcpExchangeError> {
     self
       .message_sender_tx
       .send(msg)
       .map_err(|e| SendNotifyError(self.address, e.to_string()))
-  }
-
-  pub fn reply2(
-    msg: Vec<u8>,
-    message_sender_tx: Sender<Vec<u8>>,
-    address: SocketAddr,
-  ) -> Result<(), ProcessError> {
-    message_sender_tx
-      .send(msg)
-      .map_err(|e| SendNotifyError(address, e.to_string()))
   }
 }

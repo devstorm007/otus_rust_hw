@@ -1,27 +1,27 @@
 use anyhow::Result;
 
-use crate::errors::app_error::AppError;
+use crate::errors::intelligent_house_error::IntelligentHouseError;
 use crate::house::intelligent_house::*;
 use crate::inventory::device_inventory::DeviceInventory;
 use crate::DeviceItem;
 
 pub trait DeviceSynchronizer {
-  fn add_room(&mut self, room_name: &RoomName) -> Result<(), AppError>;
+  fn add_room(&mut self, room_name: &RoomName) -> Result<(), IntelligentHouseError>;
 
-  fn remove_room(&mut self, room_name: &RoomName) -> Result<(), AppError>;
+  fn remove_room(&mut self, room_name: &RoomName) -> Result<(), IntelligentHouseError>;
 
   fn add_device(
     &mut self,
     room_name: &RoomName,
     device_name: &DeviceName,
     device: DeviceItem,
-  ) -> Result<(), AppError>;
+  ) -> Result<(), IntelligentHouseError>;
 
   fn remove_device(
     &mut self,
     room_name: &RoomName,
     device_name: &DeviceName,
-  ) -> Result<(), AppError>;
+  ) -> Result<(), IntelligentHouseError>;
 }
 
 pub struct HouseDeviceSynchronizer<'a, T: DeviceInventory> {
@@ -39,13 +39,13 @@ impl<'a, T: DeviceInventory> HouseDeviceSynchronizer<'a, T> {
 }
 
 impl<'a, T: DeviceInventory> DeviceSynchronizer for HouseDeviceSynchronizer<'a, T> {
-  fn add_room(&mut self, room_name: &RoomName) -> Result<(), AppError> {
+  fn add_room(&mut self, room_name: &RoomName) -> Result<(), IntelligentHouseError> {
     self.house.add_room(room_name)?;
     self.inventory.add_room(room_name)?;
     Ok(())
   }
 
-  fn remove_room(&mut self, room_name: &RoomName) -> Result<(), AppError> {
+  fn remove_room(&mut self, room_name: &RoomName) -> Result<(), IntelligentHouseError> {
     self.house.remove_room(room_name)?;
     self.inventory.remove_room(room_name)?;
     Ok(())
@@ -56,7 +56,7 @@ impl<'a, T: DeviceInventory> DeviceSynchronizer for HouseDeviceSynchronizer<'a, 
     room_name: &RoomName,
     device_name: &DeviceName,
     device: DeviceItem,
-  ) -> Result<(), AppError> {
+  ) -> Result<(), IntelligentHouseError> {
     self.house.add_device(room_name, device_name)?;
     self.inventory.add_device(room_name, device_name, device)?;
     Ok(())
@@ -66,7 +66,7 @@ impl<'a, T: DeviceInventory> DeviceSynchronizer for HouseDeviceSynchronizer<'a, 
     &mut self,
     room_name: &RoomName,
     device_name: &DeviceName,
-  ) -> Result<(), AppError> {
+  ) -> Result<(), IntelligentHouseError> {
     self.house.remove_device(room_name, device_name)?;
     self.inventory.remove_device(room_name, device_name)?;
     Ok(())

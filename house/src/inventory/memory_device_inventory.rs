@@ -1,3 +1,4 @@
+use std::collections::hash_map::Entry::Occupied;
 use std::collections::HashMap;
 
 use anyhow::Result;
@@ -7,8 +8,8 @@ use parking_lot::RwLock;
 use crate::devices::device_info::DeviceInfo;
 use crate::devices::power_socket::PowerSocket;
 use crate::devices::temperature_sensor::TemperatureSensor;
-use crate::errors::app_error::InventoryError;
-use crate::errors::app_error::InventoryError::*;
+use crate::errors::intelligent_house_error::InventoryError;
+use crate::errors::intelligent_house_error::InventoryError::*;
 use crate::house::intelligent_house::*;
 use crate::inventory::device_inventory::DeviceInventory;
 
@@ -106,5 +107,29 @@ impl DeviceInventory for MemoryDeviceInventory {
       )),
       None => Err(InventoryRoomNotFound(room_name.clone())),
     }
+  }
+
+  fn change_device(
+    &mut self,
+    room_name: &RoomName,
+    device_name: &DeviceName,
+    modify: impl Fn(DeviceItem) -> Result<DeviceItem, InventoryError>,
+  ) -> std::result::Result<(), InventoryError> {
+    match self.room_devices.write().get_mut(room_name) {
+      Some(devices) => match devices.entry(device_name.clone()) {
+        Occupied(mut entry) => {
+          let changed = modify(*entry.get())?;
+          entry.insert(changed);
+          Ok(())
+        }
+        _ => Err(InventoryDeviceNotFound(
+          device_name.clone(),
+          room_name.clone(),
+        )),
+      },
+      None => Err(InventoryRoomNotFound(room_name.clone())),
+    }?;
+
+    Ok(())
   }
 }

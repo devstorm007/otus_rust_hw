@@ -3,7 +3,7 @@ use thiserror::Error;
 use crate::{DeviceName, RoomName};
 
 #[derive(Error, Debug)]
-pub enum AppError {
+pub enum IntelligentHouseError {
   #[error("inventory error `{0}` raised")]
   InventoryError(#[from] InventoryError),
 
@@ -15,6 +15,9 @@ pub enum AppError {
 pub enum InventoryError {
   #[error("inventory device `{0}` not found")]
   InventoryDeviceNotFound(DeviceName, RoomName),
+
+  #[error("inventory inappropriate device `{0}` for change")]
+  InventoryDeviceInvalid(DeviceName, RoomName),
 
   #[error("inventory device `{0}` already added into room {1}")]
   InventoryDeviceAlreadyAdded(DeviceName, RoomName),

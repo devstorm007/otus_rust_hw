@@ -4,8 +4,8 @@ use std::hash::Hash;
 use derive_more::Display;
 use parking_lot::RwLock;
 
-use crate::errors::app_error::HouseError;
-use crate::errors::app_error::HouseError::*;
+use crate::errors::intelligent_house_error::HouseError;
+use crate::errors::intelligent_house_error::HouseError::*;
 use crate::inventory::device_inventory::DeviceInventory;
 
 #[derive(Debug)]
