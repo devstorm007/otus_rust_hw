@@ -26,7 +26,8 @@ fn test_socket_info() {
                 - type C
                 - voltage=220
                 - current=5
-                - enabled=true"
+                - enabled=true
+                - power=1100"
   );
 }
 
@@ -79,7 +80,8 @@ fn test_inventory_socket_info() {
                 - type C
                 - voltage=220
                 - current=5
-                - enabled=true"
+                - enabled=true
+                - power=1100"
   );
 }
 
@@ -166,6 +168,7 @@ fn test_house_report() {
                 - voltage=220
                 - current=5
                 - enabled=true
+                - power=1100
      TS 'sensor1' specification:
                 - 26C° 
                 - range 10-40C° 
