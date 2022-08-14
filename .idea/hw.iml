@@ -9,6 +9,8 @@
       <sourceFolder url="file://$MODULE_DIR$/house_server/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/tcp_exchange/examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/tcp_exchange/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/exchange_model/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/udp_exchange/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />

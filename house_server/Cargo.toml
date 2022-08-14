@@ -17,4 +17,6 @@ derive_more = "0.99.0"
 parking_lot = "0.12.1"
 threadpool = "1.0"
 tcp_exchange = { path = "../tcp_exchange" }
+exchange_model = { path = "../exchange_model" }
+
 house = { path = "../house" }

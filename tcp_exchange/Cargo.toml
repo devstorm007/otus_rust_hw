@@ -9,3 +9,4 @@ edition = "2021"
 anyhow = "1.0"
 thiserror = "1.0"
 threadpool = "1.0"
+exchange_model = { path = "../exchange_model" }

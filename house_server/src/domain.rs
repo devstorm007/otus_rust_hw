@@ -2,29 +2,29 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RequestMessage {
-  pub body: RequestBody,
+    pub body: RequestBody,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum RequestBody {
-  ChangeDeviceData {
-    location: DeviceLocation,
-    data: DeviceData,
-  },
-  ShowDeviceInfo {
-    location: DeviceLocation,
-  },
+    ChangeDeviceData {
+        location: DeviceLocation,
+        data: DeviceData,
+    },
+    ShowDeviceInfo {
+        location: DeviceLocation,
+    },
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DeviceLocation {
-  pub room_name: String,
-  pub device_name: String,
+    pub room_name: String,
+    pub device_name: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum DeviceData {
-  PowerSocketState { enabled: bool },
+    PowerSocketState { enabled: bool },
 }
 
 /*#[derive(Debug, Serialize, Deserialize)]
@@ -34,14 +34,14 @@ pub struct PowerSocketState {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ResponseMessage {
-  pub body: ResponseBody,
+    pub body: ResponseBody,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum ResponseBody {
-  DeviceDataChanged,
-  PowerSocketInfo { enabled: bool, power: u32 },
-  DeviceDescription(String),
+    DeviceDataChanged,
+    PowerSocketInfo { enabled: bool, power: u32 },
+    DeviceDescription(String),
 }
 
 /*#[derive(Debug, Serialize, Deserialize)]

@@ -4,4 +4,6 @@ members = [
     "house",
     "house_server",
     "tcp_exchange",
+    "udp_exchange",
+    "exchange_model",
 ]
