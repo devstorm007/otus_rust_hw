@@ -5,7 +5,7 @@ use flexbuffers::{DeserializationError, Reader, SerializationError};
 use serde::{Deserialize, Serialize};
 use threadpool::ThreadPool;
 
-use exchange_model::domain::Message;
+use exchange_protocol::domain::Message;
 use tcp_exchange::tcp_client::TcpClient;
 
 use crate::domain::{RequestMessage, ResponseMessage};

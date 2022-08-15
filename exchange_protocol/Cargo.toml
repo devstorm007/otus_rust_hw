@@ -1,5 +1,5 @@
 [package]
-name = "tcp_exchange"
+name = "exchange_protocol"
 version = "0.1.0"
 edition = "2021"
 
@@ -9,4 +9,3 @@ edition = "2021"
 anyhow = "1.0"
 thiserror = "1.0"
 threadpool = "1.0"
-exchange_protocol = { path = "../exchange_protocol" }

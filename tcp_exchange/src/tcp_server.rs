@@ -7,11 +7,11 @@ use std::sync::mpsc::{channel, Receiver, Sender};
 
 use threadpool::ThreadPool;
 
-use exchange_model::domain::{Message, NotifyMessage};
-use exchange_model::error::ExchangeError;
-use exchange_model::error::ExchangeError::SendNotifyError;
+use exchange_protocol::domain::{Message, NotifyMessage};
+use exchange_protocol::error::ExchangeError;
+use exchange_protocol::error::ExchangeError::SendNotifyError;
 
-use crate::tcp_protocol::{decode_bytes, encode_bytes};
+use exchange_protocol::codecs::{decode_bytes, encode_bytes};
 
 pub struct TcpServer {
     pub address: SocketAddr,

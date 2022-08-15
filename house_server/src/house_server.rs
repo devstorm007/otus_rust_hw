@@ -7,7 +7,7 @@ use frunk::hlist;
 use serde::{Deserialize, Serialize};
 use threadpool::ThreadPool;
 
-use exchange_model::domain::Message;
+use exchange_protocol::domain::Message;
 use house::devices::power_socket::PowerSocket;
 use house::errors::intelligent_house_error::IntelligentHouseError;
 use house::errors::intelligent_house_error::InventoryError;

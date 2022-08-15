@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::thread;
 
-use exchange_model::domain::Message;
+use exchange_protocol::domain::Message;
 use threadpool::ThreadPool;
 
 use tcp_exchange::tcp_server::TcpServer;

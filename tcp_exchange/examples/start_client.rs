@@ -3,7 +3,7 @@ use std::thread;
 
 use threadpool::ThreadPool;
 
-use exchange_model::domain::Message;
+use exchange_protocol::domain::Message;
 use tcp_exchange::tcp_client::TcpClient;
 
 fn main() -> Result<(), Box<dyn Error>> {

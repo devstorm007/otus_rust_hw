@@ -5,7 +5,7 @@ use std::net::SocketAddr;
 use flexbuffers::{DeserializationError, SerializationError};
 use thiserror::Error;
 
-use exchange_model::error::ExchangeError;
+use exchange_protocol::error::ExchangeError;
 use house::errors::intelligent_house_error::IntelligentHouseError;
 
 #[derive(Debug, Error)]

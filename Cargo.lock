@@ -52,7 +52,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "exchange_model"
+name = "exchange_protocol"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -167,7 +167,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "derive_more",
- "exchange_model",
+ "exchange_protocol",
  "flexbuffers",
  "frunk",
  "frunk_core",
@@ -356,7 +356,7 @@ name = "tcp_exchange"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "exchange_model",
+ "exchange_protocol",
  "thiserror",
  "threadpool",
 ]
@@ -410,7 +410,7 @@ name = "upd_exchange"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "exchange_model",
+ "exchange_protocol",
  "thiserror",
  "threadpool",
 ]
