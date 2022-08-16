@@ -7,7 +7,7 @@ use std::sync::mpsc::{channel, Receiver, Sender};
 
 use threadpool::ThreadPool;
 
-use exchange_protocol::domain::{Message, NotifyMessage};
+use exchange_protocol::domain::{Message, NotifyMessage, SendMessage};
 use exchange_protocol::error::ExchangeError;
 use exchange_protocol::error::ExchangeError::SendNotifyError;
 
@@ -67,15 +67,11 @@ impl TcpServer {
         message_notifier_tx: Sender<NotifyMessage>,
         pool: &ThreadPool,
     ) -> Result<(), ExchangeError> {
-        let (client_sender_tx, client_sender_rx) = channel::<Vec<u8>>();
+        let (client_sender_tx, client_sender_rx) = channel::<SendMessage>();
 
         let send_client_stream = client_stream.try_clone()?;
         pool.execute(move || {
-            TcpServer::process_sending_messages(
-                send_client_stream,
-                client_address,
-                client_sender_rx,
-            );
+            TcpServer::process_sending_messages(send_client_stream, client_sender_rx);
         });
 
         message_notifier_tx
@@ -106,15 +102,21 @@ impl TcpServer {
 
     fn process_sending_messages(
         mut send_client_stream: TcpStream,
-        _client_address: SocketAddr,
-        client_sender_rx: Receiver<Vec<u8>>,
+        client_sender_rx: Receiver<SendMessage>,
     ) {
-        while let Ok(msg_bytes) = client_sender_rx.recv() {
-            let encoded = encode_bytes(msg_bytes.as_slice());
+        while let Ok(SendMessage {
+            bytes,
+            client_address,
+        }) = client_sender_rx.recv()
+        {
+            let encoded = encode_bytes(bytes.as_slice());
             send_client_stream
                 .write_all(&encoded)
                 .unwrap_or_else(|error| {
-                    eprintln!("sending message to client '{_client_address}' failed: {error}")
+                    eprintln!(
+                        "sending message to client '{}' failed: {error}",
+                        client_address
+                    )
                 });
         }
     }
@@ -122,25 +124,23 @@ impl TcpServer {
     fn process_receiving_messages(
         mut client_bytes: Bytes<TcpStream>,
         client_address: SocketAddr,
-        client_sender_tx: Sender<Vec<u8>>,
+        client_sender_tx: Sender<SendMessage>,
         message_notifier_tx: Sender<NotifyMessage>,
     ) -> Result<(), ExchangeError> {
         while let Ok(message) = decode_bytes(&mut client_bytes) {
+            let msg = NotifyMessage::new(
+                Message::Bytes(message),
+                client_address,
+                client_sender_tx.clone(),
+            );
             message_notifier_tx
-                .send(NotifyMessage::new(
-                    Message::Bytes(message),
-                    client_address,
-                    client_sender_tx.clone(),
-                ))
+                .send(msg)
                 .map_err(|e| SendNotifyError(client_address, e.to_string()))?;
         }
 
+        let msg = NotifyMessage::new(Message::Disconnected, client_address, client_sender_tx);
         message_notifier_tx
-            .send(NotifyMessage::new(
-                Message::Disconnected,
-                client_address,
-                client_sender_tx,
-            ))
+            .send(msg)
             .map_err(|e| SendNotifyError(client_address, e.to_string()))
     }
 }

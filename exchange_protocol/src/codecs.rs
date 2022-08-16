@@ -1,6 +1,8 @@
 use std::io::{self};
 use std::mem;
 
+pub const MAX_SIZE: usize = LengthType::MAX as usize;
+
 type LengthType = u16;
 
 const LENGTH_SIZE: usize = mem::size_of::<LengthType>();
