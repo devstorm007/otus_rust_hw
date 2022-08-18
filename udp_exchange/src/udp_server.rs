@@ -1,18 +1,12 @@
-use core::slice::SlicePattern;
-use std::io::Bytes;
-use std::io::{Read, Write};
-use std::net::{
-    Ipv4Addr, Shutdown, SocketAddr, SocketAddrV4, TcpListener, TcpStream, ToSocketAddrs, UdpSocket,
-};
+use std::net::{SocketAddr, ToSocketAddrs, UdpSocket};
 use std::sync::mpsc::{channel, Receiver, Sender};
 
 use threadpool::ThreadPool;
 
+use exchange_protocol::codecs::MAX_SIZE;
 use exchange_protocol::domain::{Message, NotifyMessage, SendMessage};
 use exchange_protocol::error::ExchangeError;
 use exchange_protocol::error::ExchangeError::SendNotifyError;
-
-use exchange_protocol::codecs::{decode_bytes, encode_bytes, MAX_SIZE};
 
 pub struct UdpServer {
     pub address: SocketAddr,
@@ -27,9 +21,10 @@ impl UdpServer {
         let socket = UdpSocket::bind(address)?;
         let server_address = socket.local_addr()?;
 
+        let send_socket = socket.try_clone()?;
         let (client_sender_tx, client_sender_rx) = channel::<SendMessage>();
         pool.execute(move || {
-            UdpServer::send_messages(socket, client_sender_rx);
+            UdpServer::send_messages(send_socket, client_sender_rx);
         });
 
         let (message_notifier_tx, message_notifier_rx) = channel::<NotifyMessage>();
@@ -67,7 +62,6 @@ impl UdpServer {
         message_notifier_tx: Sender<NotifyMessage>,
     ) -> Result<(), ExchangeError> {
         let mut buf = [0; MAX_SIZE];
-
         while let Ok((received, client_address)) = socket.recv_from(&mut buf) {
             let msg = NotifyMessage::new(
                 Message::Bytes(buf[..received].into()),

@@ -1,15 +1,11 @@
 use std::io;
-use std::io::Bytes;
-use std::io::{Read, Write};
-use std::net::{
-    Ipv4Addr, Shutdown, SocketAddr, SocketAddrV4, TcpListener, TcpStream, ToSocketAddrs, UdpSocket,
-};
+use std::net::{SocketAddr, ToSocketAddrs, UdpSocket};
 use std::sync::mpsc::{channel, Receiver, Sender};
 
 use threadpool::ThreadPool;
 
-use exchange_protocol::codecs::{decode_bytes, encode_bytes, MAX_SIZE};
-use exchange_protocol::domain::{Message, NotifyMessage, SendMessage};
+use exchange_protocol::codecs::MAX_SIZE;
+use exchange_protocol::domain::Message;
 use exchange_protocol::error::ExchangeError;
 use exchange_protocol::error::ExchangeError::SendNotifyError;
 
@@ -22,8 +18,8 @@ pub struct UdpClient {
 
 impl UdpClient {
     pub fn connect<Addrs: ToSocketAddrs>(
-        local_addrs: Addrs,
         server_addrs: Addrs,
+        local_addrs: Addrs,
         pool: &ThreadPool,
     ) -> Result<UdpClient, ExchangeError> {
         let socket = UdpSocket::bind(local_addrs)?;
@@ -35,18 +31,17 @@ impl UdpClient {
         let (message_notifier_tx, message_notifier_rx) = channel::<Message>();
         let receive_socket = socket.try_clone()?;
         pool.execute(move || {
-            UdpClient::receive_messages(receive_socket, message_notifier_tx).unwrap_or_else(
-                |error| {
+            UdpClient::receive_messages(receive_socket, message_notifier_tx, server_address)
+                .unwrap_or_else(|error| {
                     eprintln!("receiving messages failed from server '{server_address}': {error:?}")
-                },
-            )
+                })
         });
 
         println!("connected to server '{}'", server_address);
 
         Ok(UdpClient {
             address: client_address,
-            server_address: server_address,
+            server_address,
             messages: message_notifier_rx,
             socket,
         })
@@ -55,8 +50,13 @@ impl UdpClient {
     fn receive_messages(
         socket: UdpSocket,
         message_notifier_tx: Sender<Message>,
+        server_address: SocketAddr,
     ) -> Result<(), ExchangeError> {
         let mut buf = [0; MAX_SIZE];
+
+        message_notifier_tx
+            .send(Message::Connected)
+            .map_err(|e| SendNotifyError(server_address, e.to_string()))?;
 
         while let Ok((received, server_address)) = socket.recv_from(&mut buf) {
             message_notifier_tx

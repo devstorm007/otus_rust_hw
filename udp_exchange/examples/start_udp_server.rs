@@ -8,12 +8,12 @@ use upd_exchange::udp_server::UdpServer;
 fn main() -> Result<(), Box<dyn Error>> {
     let pool: ThreadPool = ThreadPool::default();
 
-    let server_address = "127.0.0.1:45999";
+    let server_address = "127.0.0.1:45959";
     let server = UdpServer::start(server_address, &pool)?;
     pool.execute(move || {
         while let Ok(notify) = server.messages.recv() {
-            match notify.message {
-                Message::Bytes(ref bytes) => match String::from_utf8(bytes.clone()) {
+            if let Message::Bytes(ref bytes) = notify.message {
+                match String::from_utf8(bytes.clone()) {
                     Ok(_data) => {
                         println!(
                             "server: received '{_data:?}' from client {}",
@@ -31,8 +31,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                         "server: bad decoding from client '{}' failed: {_error:?}",
                         notify.address
                     ),
-                },
-                _ => {}
+                }
             }
         }
     });
