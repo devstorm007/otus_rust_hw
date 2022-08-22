@@ -4,6 +4,7 @@ use std::sync::mpsc::Sender;
 use crate::error::ExchangeError;
 use crate::error::ExchangeError::SendNotifyError;
 
+#[derive(Debug)]
 pub enum Message {
     Connected,
     Bytes(Vec<u8>),

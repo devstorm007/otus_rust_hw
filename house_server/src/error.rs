@@ -24,6 +24,8 @@ pub enum HouseExchangeError {
     ReceiveError,
     #[error("Sending notify message for '{0}' failed: {1}")]
     SendNotifyError(SocketAddr, String),
+    #[error("Sending notify message to bus failed: {0}")]
+    SendNotifyEventError(String),
     #[error("house interaction error: {0}")]
     IntelligentHouseError(#[from] IntelligentHouseError),
 }

@@ -19,10 +19,10 @@ pub struct UdpClient {
 impl UdpClient {
     pub fn connect<Addrs: ToSocketAddrs>(
         server_addrs: Addrs,
-        local_addrs: Addrs,
         pool: &ThreadPool,
     ) -> Result<UdpClient, ExchangeError> {
-        let socket = UdpSocket::bind(local_addrs)?;
+        let local_address = "127.0.0.1:41858";
+        let socket = UdpSocket::bind(local_address)?;
         socket.connect(server_addrs)?;
 
         let server_address = socket.peer_addr()?;
@@ -67,16 +67,24 @@ impl UdpClient {
         Ok(())
     }
 
-    pub fn send(&mut self, bytes: &[u8]) -> io::Result<()> {
-        self.socket
-            .send_to(bytes, self.server_address)
+    pub fn send(&self, bytes: &[u8]) -> io::Result<()> {
+        Self::send_by(self.socket.try_clone()?, self.server_address, bytes)
+    }
+
+    pub fn send_by(socket: UdpSocket, server_address: SocketAddr, bytes: &[u8]) -> io::Result<()> {
+        socket
+            .send_to(bytes, server_address)
             .unwrap_or_else(|error| {
                 eprintln!(
                     "sending message to server '{}' failed: {error}",
-                    self.server_address
+                    server_address
                 );
                 0
             });
         Ok(())
+    }
+
+    pub fn clone_socket(&self) -> io::Result<UdpSocket> {
+        self.socket.try_clone()
     }
 }

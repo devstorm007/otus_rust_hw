@@ -3,7 +3,7 @@ use std::error::Error;
 use threadpool::ThreadPool;
 
 use exchange_protocol::domain::Message;
-use upd_exchange::udp_server::UdpServer;
+use udp_exchange::udp_server::UdpServer;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let pool: ThreadPool = ThreadPool::default();

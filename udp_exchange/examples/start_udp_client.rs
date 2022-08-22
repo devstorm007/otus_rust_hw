@@ -3,14 +3,13 @@ use std::error::Error;
 use threadpool::ThreadPool;
 
 use exchange_protocol::domain::Message;
-use upd_exchange::udp_client::UdpClient;
+use udp_exchange::udp_client::UdpClient;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let pool: ThreadPool = ThreadPool::default();
 
-    let local_address = "127.0.0.1:45858";
     let server_address = "127.0.0.1:45959";
-    let mut client = UdpClient::connect(server_address, local_address, &pool)?;
+    let client = UdpClient::connect(server_address, &pool)?;
 
     pool.execute(move || {
         while let Ok(msg) = client.messages.recv() {

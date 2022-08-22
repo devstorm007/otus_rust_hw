@@ -1,11 +1,20 @@
 use crate::devices::device_info::DeviceInfo;
 use crate::DeviceName;
+use rand::prelude::ThreadRng;
+use rand::Rng;
 
 #[derive(Debug, Clone, Copy)]
 pub struct TemperatureSensor {
     pub temperature: i32,
     pub range: SensorRange,
     pub accuracy: i32,
+}
+
+impl TemperatureSensor {
+    pub fn current_temperature(&self) -> i32 {
+        let mut rng: ThreadRng = rand::thread_rng();
+        rng.gen_range(self.range.min..self.range.max)
+    }
 }
 
 impl DeviceInfo for TemperatureSensor {

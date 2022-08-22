@@ -1,5 +1,3 @@
-//use anyhow::Result;
-
 use crate::errors::intelligent_house_error::InventoryError;
 use crate::house::intelligent_house::*;
 use crate::DeviceItem;
@@ -34,4 +32,10 @@ pub trait DeviceInventory {
         device_name: &DeviceName,
         modify: impl Fn(DeviceItem) -> Result<DeviceItem, InventoryError>,
     ) -> Result<(), InventoryError>;
+
+    fn get_device(
+        &self,
+        room_name: &RoomName,
+        device_name: &DeviceName,
+    ) -> Result<DeviceItem, InventoryError>;
 }

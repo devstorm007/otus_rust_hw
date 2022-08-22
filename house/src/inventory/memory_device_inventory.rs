@@ -1,5 +1,6 @@
 use std::collections::hash_map::Entry::Occupied;
 use std::collections::HashMap;
+use std::sync::Arc;
 
 use anyhow::Result;
 use frunk::{hlist, Coprod};
@@ -13,9 +14,9 @@ use crate::errors::intelligent_house_error::InventoryError::*;
 use crate::house::intelligent_house::*;
 use crate::inventory::device_inventory::DeviceInventory;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct MemoryDeviceInventory {
-    room_devices: RwLock<HashMap<RoomName, HashMap<DeviceName, DeviceItem>>>,
+    room_devices: Arc<RwLock<HashMap<RoomName, HashMap<DeviceName, DeviceItem>>>>,
 }
 
 pub type DeviceItem = Coprod!(PowerSocket, TemperatureSensor);
@@ -25,7 +26,7 @@ impl MemoryDeviceInventory {
         room_devices: HashMap<RoomName, HashMap<DeviceName, DeviceItem>>,
     ) -> MemoryDeviceInventory {
         MemoryDeviceInventory {
-            room_devices: RwLock::new(room_devices),
+            room_devices: Arc::new(RwLock::new(room_devices)),
         }
     }
 }
@@ -127,8 +128,19 @@ impl DeviceInventory for MemoryDeviceInventory {
                 )),
             },
             None => Err(InventoryRoomNotFound(room_name.clone())),
-        }?;
+        }
+    }
 
-        Ok(())
+    fn get_device(
+        &self,
+        room_name: &RoomName,
+        device_name: &DeviceName,
+    ) -> Result<DeviceItem, InventoryError> {
+        let room_devices = self.room_devices.read();
+        room_devices
+            .get(room_name)
+            .and_then(|ds| ds.get(device_name))
+            .copied()
+            .ok_or_else(|| InventoryDeviceNotFound(device_name.clone(), room_name.clone()))
     }
 }

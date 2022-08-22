@@ -1,5 +1,5 @@
 [package]
-name = "upd_exchange"
+name = "udp_exchange"
 version = "0.1.0"
 edition = "2021"
 

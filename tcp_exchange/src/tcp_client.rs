@@ -75,10 +75,10 @@ impl TcpClient {
     }
 
     pub fn send(&mut self, bytes: &[u8]) -> io::Result<()> {
-        TcpClient::send_by_stream(&mut self.send_stream, bytes)
+        TcpClient::send_by(&mut self.send_stream, bytes)
     }
 
-    pub fn send_by_stream(stream: &mut TcpStream, bytes: &[u8]) -> io::Result<()> {
+    pub fn send_by(stream: &mut TcpStream, bytes: &[u8]) -> io::Result<()> {
         let encoded = &encode_bytes(bytes);
         stream.write_all(encoded)
     }
