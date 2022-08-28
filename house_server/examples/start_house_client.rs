@@ -1,5 +1,3 @@
-use std::thread;
-use std::time::Duration;
 use threadpool::ThreadPool;
 
 use house_server::domain::DeviceData::*;
@@ -10,26 +8,19 @@ use house_server::domain::ResponseBody::MonitorRemoved;
 use house_server::domain::{DeviceLocation, RequestMessage, ResponseMessage};
 use house_server::error::*;
 use house_server::house_client::HouseClient;
-use house_server::house_server::HouseServer;
 
 fn main() -> Result<(), HouseExchangeError> {
     let pool: ThreadPool = ThreadPool::default();
 
     let tcp_server_address = "127.0.0.1:45932";
     let udp_server_address = "127.0.0.1:45959";
-
-    let room_device_names = house::ThreeRoomNames::default();
-    let inventory = house::mk_three_rooms_inventory(room_device_names);
-
-    HouseServer::start(inventory, tcp_server_address, udp_server_address, &pool)?;
-
-    thread::sleep(Duration::from_secs(2));
+    let udp_local_address = "127.0.0.1:41868";
 
     let mut client = HouseClient::connect(
-        "a".to_string(),
+        "b".to_string(),
         tcp_server_address,
         udp_server_address,
-        "127.0.0.1:41858",
+        udp_local_address,
         &pool,
     )?;
 
@@ -42,7 +33,7 @@ fn main() -> Result<(), HouseExchangeError> {
         },
     })?;
     println!(
-        "client_a: kitchen->socket4 before disable: {:?}'",
+        "client_b: kitchen->socket4 before disable: {:?}'",
         response.body
     );
 
@@ -56,7 +47,7 @@ fn main() -> Result<(), HouseExchangeError> {
         },
     })?;
     println!(
-        "client_a: kitchen->socket4 try to disable: {:?}",
+        "client_b: kitchen->socket4 try to disable: {:?}",
         response.body
     );
 
@@ -69,7 +60,7 @@ fn main() -> Result<(), HouseExchangeError> {
         },
     })?;
     println!(
-        "client_a: kitchen->socket4 after disable: {:?}",
+        "client_b: kitchen->socket4 after disable: {:?}",
         response.body
     );
 
@@ -83,7 +74,7 @@ fn main() -> Result<(), HouseExchangeError> {
         },
     })?;
     println!(
-        "client_a: kitchen->socket4 try to enable: {:?}",
+        "client_b: kitchen->socket4 try to enable: {:?}",
         response.body
     );
 
@@ -96,7 +87,7 @@ fn main() -> Result<(), HouseExchangeError> {
         },
     })?;
     println!(
-        "client_a: kitchen->socket4 after enable: {:?}",
+        "client_b: kitchen->socket4 after enable: {:?}",
         response.body
     );
 
@@ -116,11 +107,11 @@ fn main() -> Result<(), HouseExchangeError> {
             ResponseMessage {
                 body: MonitorRemoved { .. },
             } => {
-                println!("client_a: left monitoring {:?}", sensor_location);
+                println!("client_b: left monitoring {:?}", sensor_location);
                 break;
             }
             ResponseMessage { body } => {
-                println!("client_a: received {:?}", body);
+                println!("client_b: received {:?}", body);
             }
         }
         i += 1;

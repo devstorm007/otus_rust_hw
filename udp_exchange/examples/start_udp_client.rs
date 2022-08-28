@@ -9,7 +9,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let pool: ThreadPool = ThreadPool::default();
 
     let server_address = "127.0.0.1:45959";
-    let client = UdpClient::connect(server_address, &pool)?;
+    let udp_local_address = "127.0.0.1:41868";
+    let client = UdpClient::connect(server_address, udp_local_address, &pool)?;
 
     pool.execute(move || {
         while let Ok(msg) = client.messages.recv() {
