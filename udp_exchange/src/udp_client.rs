@@ -19,9 +19,9 @@ pub struct UdpClient {
 impl UdpClient {
     pub fn connect<Addrs: ToSocketAddrs>(
         server_addrs: Addrs,
+        local_address: Addrs,
         pool: &ThreadPool,
     ) -> Result<UdpClient, ExchangeError> {
-        let local_address = "127.0.0.1:41858";
         let socket = UdpSocket::bind(local_address)?;
         socket.connect(server_addrs)?;
 

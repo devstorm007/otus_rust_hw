@@ -1,4 +1,4 @@
-use std::net::{SocketAddr, TcpStream, UdpSocket};
+use std::net::{SocketAddr, TcpStream, ToSocketAddrs, UdpSocket};
 use std::sync::mpsc::{channel, Receiver, Sender};
 
 use flexbuffers::{DeserializationError, Reader, SerializationError};
@@ -20,12 +20,19 @@ pub struct HouseClient {
 }
 
 impl HouseClient {
-    pub fn connect(
+    pub fn connect<Addrs: ToSocketAddrs>(
         server: HouseServer,
+        local_address: Addrs,
         pool: &ThreadPool,
     ) -> Result<HouseClient, HouseExchangeError> {
         let tcp_client = TcpClient::connect(server.tcp_address, pool)?;
-        let udp_client = UdpClient::connect(server.udp_address, pool)?;
+        let address = *local_address
+            .to_socket_addrs()
+            .unwrap()
+            .collect::<Vec<SocketAddr>>()
+            .first()
+            .unwrap();
+        let udp_client = UdpClient::connect(server.udp_address, address, pool)?;
 
         let (request_message_tx, request_message_rx) = channel::<RequestMessage>();
 
@@ -119,9 +126,12 @@ impl HouseClient {
 
         let bytes = serializer.view();
 
+        println!("client: send message {:?}", request_message.body);
+
         match request_message.body {
             RequestBody::ChangeDeviceData { .. } | RequestBody::ShowDeviceInfo { .. } => {
                 let server_address = send_stream.peer_addr()?;
+                println!("client: send_by");
                 TcpClient::send_by(send_stream, bytes)
                     .map_err(|e| SendNotifyError(server_address, e.to_string()))
             }
@@ -137,14 +147,18 @@ impl HouseClient {
         &mut self,
         msg: RequestMessage,
     ) -> Result<ResponseMessage, HouseExchangeError> {
-        self.request_message_tx
-            .send(msg)
-            .map_err(|e| SendNotifyEventError(e.to_string()))?;
+        println!("client: send message {:?} to bus", msg);
+        self.request_message_tx.send(msg).map_err(|e| {
+            eprintln!("client: failed send to bus: {}", e);
+            SendNotifyEventError(e.to_string())
+        })?;
 
+        println!("client: wait response");
         self.response_message_rx.recv().map_err(|_| ReceiveError)
     }
 
     pub fn send(&mut self, msg: RequestMessage) -> Result<(), HouseExchangeError> {
+        println!("client: send message {:?} to bus", msg);
         self.request_message_tx
             .send(msg)
             .map_err(|e| SendNotifyEventError(e.to_string()))

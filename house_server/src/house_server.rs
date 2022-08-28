@@ -27,6 +27,7 @@ use crate::domain::ResponseBody::*;
 use crate::domain::{DeviceData, DeviceLocation, RequestBody, RequestMessage, ResponseMessage};
 use crate::error::HouseExchangeError;
 
+#[derive(Clone)]
 pub struct HouseServer {
     pub tcp_address: SocketAddr,
     pub udp_address: SocketAddr,

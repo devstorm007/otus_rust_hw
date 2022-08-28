@@ -21,7 +21,7 @@ fn main() -> Result<(), HouseExchangeError> {
 
     let server = HouseServer::start(inventory, tcp_server_address, udp_server_address, &pool)?;
 
-    let mut client = HouseClient::connect(server, &pool)?;
+    let mut client = HouseClient::connect(server.clone(), "127.0.0.1:41858", &pool)?;
 
     let response = client.send_and_receive(RequestMessage {
         body: ShowDeviceInfo {
