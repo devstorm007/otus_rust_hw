@@ -1,10 +1,11 @@
 use std::net::SocketAddr;
+use std::sync::Arc;
 
 use tokio::io::AsyncWriteExt;
 use tokio::net::tcp::OwnedReadHalf;
 use tokio::net::{TcpListener, TcpStream, ToSocketAddrs};
-use tokio::sync::mpsc;
 use tokio::sync::mpsc::{Receiver, Sender};
+use tokio::sync::{mpsc, Mutex};
 
 use exchange_protocol::codecs::{decode_bytes_async, encode_bytes};
 use exchange_protocol::domain::{Message, NotifyMessage, SendMessage};
@@ -13,7 +14,7 @@ use exchange_protocol::error::ExchangeError::SendNotifyError;
 
 pub struct TcpServer {
     pub address: SocketAddr,
-    pub messages: Receiver<NotifyMessage>,
+    pub messages: Arc<Mutex<Receiver<NotifyMessage>>>,
 }
 
 impl TcpServer {
@@ -37,7 +38,7 @@ impl TcpServer {
 
         Ok(TcpServer {
             address: server_address,
-            messages: message_notifier_rx,
+            messages: Arc::new(Mutex::new(message_notifier_rx)),
         })
     }
 

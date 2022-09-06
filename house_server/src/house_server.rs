@@ -1,7 +1,6 @@
 use std::borrow::BorrowMut;
 use std::net::SocketAddr;
 use std::sync::Arc;
-use std::thread;
 use std::time::Duration;
 
 use dashmap::DashMap;
@@ -11,6 +10,7 @@ use serde::{Deserialize, Serialize};
 use tokio::net::ToSocketAddrs;
 use tokio::sync::mpsc::Receiver;
 use tokio::sync::Mutex;
+use tokio::time::sleep;
 
 use exchange_protocol::domain::{Message, NotifyMessage};
 use house::devices::power_socket::PowerSocket;
@@ -40,7 +40,7 @@ impl HouseServer {
         tcp_address: Addrs,
         udp_address: Addrs,
     ) -> Result<HouseServer, HouseExchangeError> {
-        let mut tcp_server = TcpServer::start(tcp_address).await?;
+        let tcp_server = TcpServer::start(tcp_address).await?;
         let udp_server = UdpServer::start(udp_address).await?;
 
         let house_server = HouseServer {
@@ -54,16 +54,16 @@ impl HouseServer {
         let inventory = device_inventory.clone();
         let monitors = device_monitors.clone();
         tokio::spawn(async move {
-            let receiver = &mut tcp_server.messages;
-            Self::process_exchange(receiver, inventory, monitors).await;
+            let messages = tcp_server.messages.clone();
+            Self::process_exchange(messages, inventory, monitors).await;
         });
 
         let inventory = device_inventory.clone();
         let monitors = device_monitors.clone();
         let server = udp_server.clone();
         tokio::spawn(async move {
-            let receiver = &mut server.lock().await.messages;
-            Self::process_exchange(receiver, inventory, monitors).await;
+            let messages = server.lock().await.messages.clone();
+            Self::process_exchange(messages, inventory, monitors).await;
         });
 
         Self::broadcast_monitors(device_monitors, device_inventory, udp_server).await;
@@ -72,11 +72,11 @@ impl HouseServer {
     }
 
     async fn process_exchange(
-        receiver: &mut Receiver<NotifyMessage>,
+        messages: Arc<Mutex<Receiver<NotifyMessage>>>,
         device_inventory: impl DeviceInventory + Clone,
         device_monitors: Arc<DashMap<SocketAddr, DeviceLocation>>,
     ) {
-        while let Some(notify) = receiver.recv().await {
+        while let Some(notify) = messages.lock().await.recv().await {
             match notify.message {
                 Message::Connected => {
                     println!("house server: client {} connected", notify.address)
@@ -92,7 +92,6 @@ impl HouseServer {
 
                     match result {
                         Ok(response_bytes) => {
-                            println!("house server: client {} connected", notify.address);
                             notify.reply(response_bytes).await.unwrap_or_else(|error| {
                                 eprintln!(
                                     "house server: send message to client '{}' failed: {error:?}",
@@ -212,19 +211,16 @@ impl HouseServer {
                     let (client_address, location) = dm.pair();
 
                     let data = Self::get_device_data(location, device_inventory.clone()).unwrap();
-
-                    udp_server
-                        .lock()
-                        .await
-                        .send(client_address, data.as_slice())
-                        .await
-                        .unwrap_or_else(|error| {
-                            eprintln!(
-                                "house server: sending message to '{client_address}' failed: {error:?}"
-                            )
-                        });
+                    udp_server.lock().await
+                      .send(client_address, data.as_slice())
+                      .await
+                      .unwrap_or_else(|error| {
+                          eprintln!(
+                              "house server: sending message to '{client_address}' failed: {error:?}"
+                          )
+                      });
                 }
-                thread::sleep(Duration::from_millis(500));
+                sleep(Duration::from_millis(500)).await;
             }
         });
     }

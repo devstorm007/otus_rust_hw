@@ -6,9 +6,10 @@ use udp_exchange::udp_server::UdpServer;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     let server_address = "127.0.0.1:45959";
-    let mut server = UdpServer::start(server_address).await?;
+    let server = UdpServer::start(server_address).await?;
 
-    while let Some(notify) = server.messages.recv().await {
+    let receiver = server.messages.clone();
+    while let Some(notify) = receiver.lock().await.recv().await {
         if let Message::Bytes(ref bytes) = notify.message {
             match String::from_utf8(bytes.clone()) {
                 Ok(_data) => {

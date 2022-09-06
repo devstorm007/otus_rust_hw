@@ -2,8 +2,8 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 
 use tokio::net::{ToSocketAddrs, UdpSocket};
-use tokio::sync::mpsc;
 use tokio::sync::mpsc::{Receiver, Sender};
+use tokio::sync::{mpsc, Mutex};
 
 use exchange_protocol::codecs::MAX_SIZE;
 use exchange_protocol::domain::Message;
@@ -13,7 +13,7 @@ use exchange_protocol::error::ExchangeError::{Io, SendNotifyError};
 pub struct UdpClient {
     pub address: SocketAddr,
     pub server_address: SocketAddr,
-    pub messages: Receiver<Message>,
+    pub messages: Arc<Mutex<Receiver<Message>>>,
     socket: Arc<UdpSocket>,
 }
 
@@ -43,7 +43,7 @@ impl UdpClient {
         Ok(UdpClient {
             address: client_address,
             server_address,
-            messages: message_notifier_rx,
+            messages: Arc::new(Mutex::new(message_notifier_rx)),
             socket: socket_arc,
         })
     }
@@ -71,17 +71,7 @@ impl UdpClient {
     }
 
     pub async fn send(&mut self, bytes: &[u8]) -> Result<(), ExchangeError> {
-        self.socket
-            .send_to(bytes, self.server_address)
-            .await
-            .map(|_| ())
-            .map_err(Io)
-        /*.unwrap_or_else(|error| {
-            eprintln!(
-                "sending message to server '{}' failed: {error}",
-                self.server_address
-            );
-        })*/
+        self.socket.send(bytes).await.map(|_| ()).map_err(Io)
     }
 
     /*pub async fn send(&self, bytes: &[u8]) -> io::Result<()> {

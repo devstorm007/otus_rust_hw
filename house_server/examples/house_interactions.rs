@@ -1,5 +1,6 @@
-use std::thread;
 use std::time::Duration;
+
+use tokio::time::sleep;
 
 use house_server::domain::DeviceData::*;
 use house_server::domain::RequestBody::{
@@ -21,8 +22,7 @@ async fn main() -> Result<(), HouseExchangeError> {
 
     HouseServer::start(inventory, tcp_server_address, udp_server_address).await?;
 
-    thread::sleep(Duration::from_secs(2));
-    println!("step 1");
+    sleep(Duration::from_secs(2)).await;
 
     let mut client = HouseClient::connect(
         "first".to_string(),
@@ -31,7 +31,7 @@ async fn main() -> Result<(), HouseExchangeError> {
         "127.0.0.1:41858",
     )
     .await?;
-    println!("step 2");
+
     let response = client
         .send_and_receive(RequestMessage {
             body: ShowDeviceInfo {
@@ -42,9 +42,9 @@ async fn main() -> Result<(), HouseExchangeError> {
             },
         })
         .await?;
-    println!("step 3");
+
     println!(
-        "client_a: kitchen->socket4 before disable: {:?}'",
+        "client_first: kitchen->socket4 before disable: {:?}'",
         response.body
     );
 
@@ -60,7 +60,7 @@ async fn main() -> Result<(), HouseExchangeError> {
         })
         .await?;
     println!(
-        "client_a: kitchen->socket4 try to disable: {:?}",
+        "client_first: kitchen->socket4 try to disable: {:?}",
         response.body
     );
 
@@ -75,7 +75,7 @@ async fn main() -> Result<(), HouseExchangeError> {
         })
         .await?;
     println!(
-        "client_a: kitchen->socket4 after disable: {:?}",
+        "client_first: kitchen->socket4 after disable: {:?}",
         response.body
     );
 
@@ -91,7 +91,7 @@ async fn main() -> Result<(), HouseExchangeError> {
         })
         .await?;
     println!(
-        "client_a: kitchen->socket4 try to enable: {:?}",
+        "client_first: kitchen->socket4 try to enable: {:?}",
         response.body
     );
 
@@ -106,7 +106,7 @@ async fn main() -> Result<(), HouseExchangeError> {
         })
         .await?;
     println!(
-        "client_a: kitchen->socket4 after enable: {:?}",
+        "client_first: kitchen->socket4 after enable: {:?}",
         response.body
     );
 
@@ -128,11 +128,11 @@ async fn main() -> Result<(), HouseExchangeError> {
             ResponseMessage {
                 body: MonitorRemoved { .. },
             } => {
-                println!("client_a: left monitoring {:?}", sensor_location);
+                println!("client_first: left monitoring {:?}", sensor_location);
                 break;
             }
             ResponseMessage { body } => {
-                println!("client_a: received {:?}", body);
+                println!("client_first: received {:?}", body);
             }
         }
         i += 1;
@@ -144,6 +144,8 @@ async fn main() -> Result<(), HouseExchangeError> {
                 .await?;
         }
     }
+
+    println!("Interactions are completed");
 
     Ok(())
 }

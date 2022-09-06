@@ -5,9 +5,10 @@ use tcp_exchange::tcp_server::TcpServer;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    let mut server = TcpServer::start("127.0.0.1:45932").await?;
+    let server = TcpServer::start("127.0.0.1:45932").await?;
 
-    while let Some(notify) = server.messages.recv().await {
+    let receiver = server.messages.clone();
+    while let Some(notify) = receiver.lock().await.recv().await {
         match notify.message {
             Message::Connected => println!("server: client {} connected", notify.address),
             Message::Bytes(ref bytes) => match String::from_utf8(bytes.clone()) {

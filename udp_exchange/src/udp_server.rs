@@ -2,8 +2,8 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 
 use tokio::net::{ToSocketAddrs, UdpSocket};
-use tokio::sync::mpsc;
 use tokio::sync::mpsc::{Receiver, Sender};
+use tokio::sync::{mpsc, Mutex};
 
 use exchange_protocol::codecs::MAX_SIZE;
 use exchange_protocol::domain::{Message, NotifyMessage, SendMessage};
@@ -12,7 +12,7 @@ use exchange_protocol::error::ExchangeError::{Io, SendNotifyError};
 
 pub struct UdpServer {
     pub address: SocketAddr,
-    pub messages: Receiver<NotifyMessage>,
+    pub messages: Arc<Mutex<Receiver<NotifyMessage>>>,
     pub socket: Arc<UdpSocket>,
 }
 
@@ -43,7 +43,7 @@ impl UdpServer {
 
         Ok(UdpServer {
             address: server_address,
-            messages: message_notifier_rx,
+            messages: Arc::new(Mutex::new(message_notifier_rx)),
             socket: socket_arc,
         })
     }

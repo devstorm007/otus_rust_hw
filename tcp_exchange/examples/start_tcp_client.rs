@@ -8,7 +8,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let server_address = "127.0.0.1:45932";
     let mut client = TcpClient::connect(server_address).await?;
 
-    while let Some(msg) = client.messages.recv().await {
+    let receiver = client.messages.clone();
+    while let Some(msg) = receiver.lock().await.recv().await {
         match msg {
             Message::Connected => {
                 println!("client: connected to server '{server_address}'");

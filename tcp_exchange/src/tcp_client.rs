@@ -1,10 +1,11 @@
 use std::net::SocketAddr;
+use std::sync::Arc;
 
 use tokio::io::AsyncWriteExt;
 use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
 use tokio::net::{TcpStream, ToSocketAddrs};
-use tokio::sync::mpsc;
 use tokio::sync::mpsc::{Receiver, Sender};
+use tokio::sync::{mpsc, Mutex};
 
 use exchange_protocol::codecs::{decode_bytes_async, encode_bytes};
 use exchange_protocol::domain::*;
@@ -14,9 +15,20 @@ use exchange_protocol::error::ExchangeError::SendNotifyError;
 pub struct TcpClient {
     pub address: SocketAddr,
     pub server_address: SocketAddr,
-    pub messages: Receiver<Message>,
+    pub messages: Arc<Mutex<Receiver<Message>>>,
     send_writer: OwnedWriteHalf,
 }
+
+/*impl Clone for TcpClient {
+    fn clone(&self) -> Self {
+        TcpClient {
+            address: self.address,
+            server_address: self.server_address,
+            messages: self.message_notifier_rx,
+            send_writer: self.send_writer.clone(),
+        }
+    }
+}*/
 
 impl TcpClient {
     pub async fn connect<T: ToSocketAddrs>(address: T) -> Result<TcpClient, ExchangeError> {
@@ -40,7 +52,7 @@ impl TcpClient {
         Ok(TcpClient {
             address: client_address,
             server_address,
-            messages: message_notifier_rx,
+            messages: Arc::new(Mutex::new(message_notifier_rx)),
             send_writer: writer,
         })
     }
