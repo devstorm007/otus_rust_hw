@@ -8,5 +8,5 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0"
 thiserror = "1.0"
-threadpool = "1.0"
+tokio = { version = "1.20.1", features = ["full"] }
 exchange_protocol = { path = "../exchange_protocol" }

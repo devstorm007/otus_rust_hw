@@ -1,4 +1,3 @@
-use std::any::Any;
 use std::io;
 use std::net::SocketAddr;
 
@@ -18,8 +17,6 @@ pub enum HouseExchangeError {
     TcpExchangeError(#[from] ExchangeError),
     #[error("IO error: {0}")]
     Io(#[from] io::Error),
-    #[error("Complete error")]
-    CompleteError(Box<dyn Any>),
     #[error("Receive error")]
     ReceiveError,
     #[error("Sending notify message for '{0}' failed: {1}")]

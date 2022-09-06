@@ -1,17 +1,15 @@
-use std::io::Bytes;
-use std::io::{Read, Write};
-use std::net::{
-    Ipv4Addr, Shutdown, SocketAddr, SocketAddrV4, TcpListener, TcpStream, ToSocketAddrs,
-};
-use std::sync::mpsc::{channel, Receiver, Sender};
+use std::net::SocketAddr;
 
-use threadpool::ThreadPool;
+use tokio::io::AsyncWriteExt;
+use tokio::net::tcp::OwnedReadHalf;
+use tokio::net::{TcpListener, TcpStream, ToSocketAddrs};
+use tokio::sync::mpsc;
+use tokio::sync::mpsc::{Receiver, Sender};
 
+use exchange_protocol::codecs::{decode_bytes_async, encode_bytes};
 use exchange_protocol::domain::{Message, NotifyMessage, SendMessage};
 use exchange_protocol::error::ExchangeError;
 use exchange_protocol::error::ExchangeError::SendNotifyError;
-
-use exchange_protocol::codecs::{decode_bytes, encode_bytes};
 
 pub struct TcpServer {
     pub address: SocketAddr,
@@ -19,41 +17,23 @@ pub struct TcpServer {
 }
 
 impl TcpServer {
-    pub fn start<Addrs: ToSocketAddrs>(
-        address: Addrs,
-        pool: &ThreadPool,
-    ) -> Result<TcpServer, ExchangeError> {
-        let listener = TcpListener::bind(address)?;
+    pub async fn start<Addrs: ToSocketAddrs>(address: Addrs) -> Result<TcpServer, ExchangeError> {
+        let listener = TcpListener::bind(address).await?;
         let server_address = listener.local_addr()?;
 
-        let (message_notifier_tx, message_notifier_rx) = channel();
+        let (message_notifier_tx, message_notifier_rx) = mpsc::channel::<NotifyMessage>(1000);
 
-        let pool_clone = pool.clone();
-        pool.execute(move || {
-            listener
-                .incoming()
-                .filter_map(Result::ok)
-                .for_each(|stream| {
-                    let client_address = stream.peer_addr().unwrap_or_else(|e| {
-                        eprintln!("getting client address failed: {e}");
-                        SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 0))
-                    });
-
-                    TcpServer::start_stream_processing(
-                        stream,
-                        client_address,
-                        message_notifier_tx.clone(),
-                        &pool_clone,
-                    )
+        tokio::spawn(async move {
+            loop {
+                Self::start_stream_processing(&listener, message_notifier_tx.clone())
+                    .await
                     .unwrap_or_else(|error| {
-                        eprintln!(
-                            "start stream processing failed for '{client_address}': {error:?}"
-                        )
+                        eprintln!("tcp_server: connection process failed: {error:?}")
                     });
-                });
+            }
         });
 
-        println!("tcp server started at {}", server_address.clone());
+        println!("tcp_server: started at {server_address}");
 
         Ok(TcpServer {
             address: server_address,
@@ -61,18 +41,15 @@ impl TcpServer {
         })
     }
 
-    fn start_stream_processing(
-        client_stream: TcpStream,
-        client_address: SocketAddr,
+    async fn start_stream_processing(
+        listener: &TcpListener,
         message_notifier_tx: Sender<NotifyMessage>,
-        pool: &ThreadPool,
     ) -> Result<(), ExchangeError> {
-        let (client_sender_tx, client_sender_rx) = channel::<SendMessage>();
+        let (client_stream, client_address) = listener.accept().await?;
 
-        let send_client_stream = client_stream.try_clone()?;
-        pool.execute(move || {
-            TcpServer::process_sending_messages(send_client_stream, client_sender_rx);
-        });
+        let (client_sender_tx, mut client_sender_rx) = mpsc::channel::<SendMessage>(1000);
+
+        let (reader, mut writer) = TcpStream::into_split(client_stream);
 
         message_notifier_tx
             .send(NotifyMessage::new(
@@ -80,67 +57,60 @@ impl TcpServer {
                 client_address,
                 client_sender_tx.clone(),
             ))
+            .await
             .map_err(|e| SendNotifyError(client_address, e.to_string()))?;
 
-        let receive_client_stream = client_stream.try_clone()?;
-        pool.execute(move || {
+        tokio::spawn(async move {
             TcpServer::process_receiving_messages(
-                receive_client_stream.bytes(),
+                reader,
                 client_address,
                 client_sender_tx.clone(),
                 message_notifier_tx.clone(),
             )
+            .await
             .unwrap_or_else(|error| {
-                eprintln!("receiving messages failed for '{client_address}': {error:?}")
+                eprintln!("tcp_server: receiving messages failed for '{client_address}': {error:?}")
             });
+        });
 
-            client_stream.shutdown(Shutdown::Both).unwrap_or_default();
+        tokio::spawn(async move {
+            while let Some(SendMessage { bytes, .. }) = client_sender_rx.recv().await {
+                let encoded = encode_bytes(bytes.as_slice());
+                writer.write_all(&encoded).await.unwrap_or_else(|error| {
+                    eprintln!(
+                        "tcp_server: sending message to client '{client_address}' failed: {error}"
+                    )
+                });
+            }
         });
 
         Ok(())
     }
 
-    fn process_sending_messages(
-        mut send_client_stream: TcpStream,
-        client_sender_rx: Receiver<SendMessage>,
-    ) {
-        while let Ok(SendMessage {
-            bytes,
-            client_address,
-        }) = client_sender_rx.recv()
-        {
-            let encoded = encode_bytes(bytes.as_slice());
-            send_client_stream
-                .write_all(&encoded)
-                .unwrap_or_else(|error| {
-                    eprintln!(
-                        "sending message to client '{}' failed: {error}",
-                        client_address
-                    )
-                });
-        }
-    }
-
-    fn process_receiving_messages(
-        mut client_bytes: Bytes<TcpStream>,
+    async fn process_receiving_messages(
+        mut reader: OwnedReadHalf,
         client_address: SocketAddr,
         client_sender_tx: Sender<SendMessage>,
         message_notifier_tx: Sender<NotifyMessage>,
     ) -> Result<(), ExchangeError> {
-        while let Ok(message) = decode_bytes(&mut client_bytes) {
-            let msg = NotifyMessage::new(
-                Message::Bytes(message),
-                client_address,
-                client_sender_tx.clone(),
-            );
+        while let Ok(message) = decode_bytes_async(&mut reader).await {
             message_notifier_tx
-                .send(msg)
+                .send(NotifyMessage::new(
+                    Message::Bytes(message),
+                    client_address,
+                    client_sender_tx.clone(),
+                ))
+                .await
                 .map_err(|e| SendNotifyError(client_address, e.to_string()))?;
         }
 
-        let msg = NotifyMessage::new(Message::Disconnected, client_address, client_sender_tx);
         message_notifier_tx
-            .send(msg)
+            .send(NotifyMessage::new(
+                Message::Disconnected,
+                client_address,
+                client_sender_tx,
+            ))
+            .await
             .map_err(|e| SendNotifyError(client_address, e.to_string()))
     }
 }

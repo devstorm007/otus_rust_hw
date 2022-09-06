@@ -1,5 +1,5 @@
 use std::net::SocketAddr;
-use std::sync::mpsc::Sender;
+use tokio::sync::mpsc::Sender;
 
 use crate::error::ExchangeError;
 use crate::error::ExchangeError::SendNotifyError;
@@ -31,12 +31,13 @@ impl NotifyMessage {
         }
     }
 
-    pub fn reply(&self, bytes: Vec<u8>) -> Result<(), ExchangeError> {
+    pub async fn reply(&self, bytes: Vec<u8>) -> Result<(), ExchangeError> {
         self.message_sender_tx
             .send(SendMessage {
                 bytes,
                 client_address: self.address,
             })
+            .await
             .map_err(|e| SendNotifyError(self.address, e.to_string()))
     }
 }

@@ -1,6 +1,5 @@
 use std::thread;
 use std::time::Duration;
-use threadpool::ThreadPool;
 
 use house_server::domain::DeviceData::*;
 use house_server::domain::RequestBody::{
@@ -12,89 +11,100 @@ use house_server::error::*;
 use house_server::house_client::HouseClient;
 use house_server::house_server::HouseServer;
 
-fn main() -> Result<(), HouseExchangeError> {
-    let pool: ThreadPool = ThreadPool::default();
-
+#[tokio::main]
+async fn main() -> Result<(), HouseExchangeError> {
     let tcp_server_address = "127.0.0.1:45932";
     let udp_server_address = "127.0.0.1:45959";
 
     let room_device_names = house::ThreeRoomNames::default();
     let inventory = house::mk_three_rooms_inventory(room_device_names);
 
-    HouseServer::start(inventory, tcp_server_address, udp_server_address, &pool)?;
+    HouseServer::start(inventory, tcp_server_address, udp_server_address).await?;
 
     thread::sleep(Duration::from_secs(2));
+    println!("step 1");
 
     let mut client = HouseClient::connect(
-        "a".to_string(),
+        "first".to_string(),
         tcp_server_address,
         udp_server_address,
         "127.0.0.1:41858",
-        &pool,
-    )?;
-
-    let response = client.send_and_receive(RequestMessage {
-        body: ShowDeviceInfo {
-            location: DeviceLocation {
-                room_name: "kitchen".to_string(),
-                device_name: "socket4".to_string(),
+    )
+    .await?;
+    println!("step 2");
+    let response = client
+        .send_and_receive(RequestMessage {
+            body: ShowDeviceInfo {
+                location: DeviceLocation {
+                    room_name: "kitchen".to_string(),
+                    device_name: "socket4".to_string(),
+                },
             },
-        },
-    })?;
+        })
+        .await?;
+    println!("step 3");
     println!(
         "client_a: kitchen->socket4 before disable: {:?}'",
         response.body
     );
 
-    let response = client.send_and_receive(RequestMessage {
-        body: ChangeDeviceData {
-            location: DeviceLocation {
-                room_name: "kitchen".to_string(),
-                device_name: "socket4".to_string(),
+    let response = client
+        .send_and_receive(RequestMessage {
+            body: ChangeDeviceData {
+                location: DeviceLocation {
+                    room_name: "kitchen".to_string(),
+                    device_name: "socket4".to_string(),
+                },
+                data: PowerSocketState { enabled: false },
             },
-            data: PowerSocketState { enabled: false },
-        },
-    })?;
+        })
+        .await?;
     println!(
         "client_a: kitchen->socket4 try to disable: {:?}",
         response.body
     );
 
-    let response = client.send_and_receive(RequestMessage {
-        body: ShowDeviceInfo {
-            location: DeviceLocation {
-                room_name: "kitchen".to_string(),
-                device_name: "socket4".to_string(),
+    let response = client
+        .send_and_receive(RequestMessage {
+            body: ShowDeviceInfo {
+                location: DeviceLocation {
+                    room_name: "kitchen".to_string(),
+                    device_name: "socket4".to_string(),
+                },
             },
-        },
-    })?;
+        })
+        .await?;
     println!(
         "client_a: kitchen->socket4 after disable: {:?}",
         response.body
     );
 
-    let response = client.send_and_receive(RequestMessage {
-        body: ChangeDeviceData {
-            location: DeviceLocation {
-                room_name: "kitchen".to_string(),
-                device_name: "socket4".to_string(),
+    let response = client
+        .send_and_receive(RequestMessage {
+            body: ChangeDeviceData {
+                location: DeviceLocation {
+                    room_name: "kitchen".to_string(),
+                    device_name: "socket4".to_string(),
+                },
+                data: PowerSocketState { enabled: true },
             },
-            data: PowerSocketState { enabled: true },
-        },
-    })?;
+        })
+        .await?;
     println!(
         "client_a: kitchen->socket4 try to enable: {:?}",
         response.body
     );
 
-    let response = client.send_and_receive(RequestMessage {
-        body: ShowDeviceInfo {
-            location: DeviceLocation {
-                room_name: "kitchen".to_string(),
-                device_name: "socket4".to_string(),
+    let response = client
+        .send_and_receive(RequestMessage {
+            body: ShowDeviceInfo {
+                location: DeviceLocation {
+                    room_name: "kitchen".to_string(),
+                    device_name: "socket4".to_string(),
+                },
             },
-        },
-    })?;
+        })
+        .await?;
     println!(
         "client_a: kitchen->socket4 after enable: {:?}",
         response.body
@@ -104,14 +114,16 @@ fn main() -> Result<(), HouseExchangeError> {
         room_name: "kitchen".to_string(),
         device_name: "sensor1".to_string(),
     };
-    client.send(RequestMessage {
-        body: RegisterDeviceMonitor {
-            location: sensor_location.clone(),
-        },
-    })?;
+    client
+        .send(RequestMessage {
+            body: RegisterDeviceMonitor {
+                location: sensor_location.clone(),
+            },
+        })
+        .await?;
 
     let mut i = 0;
-    while let Ok(response) = client.response_message_rx.recv() {
+    while let Some(response) = client.response_message_rx.recv().await {
         match response {
             ResponseMessage {
                 body: MonitorRemoved { .. },
@@ -124,14 +136,14 @@ fn main() -> Result<(), HouseExchangeError> {
             }
         }
         i += 1;
-        if i == 56 {
-            client.send(RequestMessage {
-                body: RemoveDeviceMonitor,
-            })?;
+        if i == 5 {
+            client
+                .send(RequestMessage {
+                    body: RemoveDeviceMonitor,
+                })
+                .await?;
         }
     }
-
-    pool.join();
 
     Ok(())
 }

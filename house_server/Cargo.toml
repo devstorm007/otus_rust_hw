@@ -15,8 +15,9 @@ frunk = "0.4.0"
 frunk_core = { version = "0.4.0", features = ["serde"] }
 derive_more = "0.99.0"
 parking_lot = "0.12.1"
-threadpool = "1.0"
 dashmap = "5.3.4"
+tokio = { version = "1.20.1", features = ["full"] }
+async-trait = "0.1.57"
 tcp_exchange = { path = "../tcp_exchange" }
 udp_exchange = { path = "../udp_exchange" }
 exchange_protocol = { path = "../exchange_protocol" }
