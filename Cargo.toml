@@ -6,4 +6,5 @@ members = [
     "tcp_exchange",
     "udp_exchange",
     "exchange_protocol",
+    "web",
 ]

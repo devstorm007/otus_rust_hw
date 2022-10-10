@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use anyhow::Result;
+use async_trait::async_trait;
 use frunk::{hlist, Coprod};
 use parking_lot::RwLock;
 
@@ -31,6 +32,7 @@ impl MemoryDeviceInventory {
     }
 }
 
+#[async_trait]
 impl DeviceInventory for MemoryDeviceInventory {
     fn get_info(
         &self,
@@ -52,7 +54,12 @@ impl DeviceInventory for MemoryDeviceInventory {
         info.ok_or_else(|| InventoryDeviceNotFound(device_name.clone(), room_name.clone()))
     }
 
-    fn add_room(&self, room_name: &RoomName) -> Result<(), InventoryError> {
+    async fn get_rooms(&self) -> std::result::Result<Vec<RoomName>, InventoryError> {
+        let room_devices = self.room_devices.read();
+        Ok(room_devices.iter().map(|(k, _)| k.clone()).collect())
+    }
+
+    async fn add_room(&self, room_name: &RoomName) -> Result<(), InventoryError> {
         let mut room_devices = self.room_devices.write();
         match room_devices.get(room_name) {
             Some(_) => Err(InventoryRoomAlreadyAdded(room_name.clone())),

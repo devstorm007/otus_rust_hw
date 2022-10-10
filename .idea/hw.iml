@@ -12,6 +12,8 @@
       <sourceFolder url="file://$MODULE_DIR$/udp_exchange/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/exchange_protocol/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/udp_exchange/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/web/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/web/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />

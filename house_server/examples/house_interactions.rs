@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use house::inventory::memory_device_inventory::MemoryDeviceInventory;
 use tokio::time::sleep;
 
 use house_server::domain::DeviceData::*;
@@ -18,7 +19,7 @@ async fn main() -> Result<(), HouseExchangeError> {
     let udp_server_address = "127.0.0.1:45959";
 
     let room_device_names = house::ThreeRoomNames::default();
-    let inventory = house::mk_three_rooms_inventory(room_device_names);
+    let inventory: MemoryDeviceInventory = house::mk_three_rooms_inventory(room_device_names);
 
     HouseServer::start(inventory, tcp_server_address, udp_server_address).await?;
 

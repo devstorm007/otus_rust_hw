@@ -1,73 +1,78 @@
 use anyhow::Result;
+use std::sync::Arc;
 
 use crate::errors::intelligent_house_error::IntelligentHouseError;
 use crate::house::intelligent_house::*;
 use crate::inventory::device_inventory::DeviceInventory;
 use crate::DeviceItem;
+use async_trait::async_trait;
+use tokio::sync::Mutex;
 
+#[async_trait]
 pub trait DeviceSynchronizer {
-    fn add_room(&mut self, room_name: &RoomName) -> Result<(), IntelligentHouseError>;
+    async fn add_room(&mut self, room_name: &RoomName) -> Result<(), IntelligentHouseError>;
 
-    fn remove_room(&mut self, room_name: &RoomName) -> Result<(), IntelligentHouseError>;
+    async fn remove_room(&mut self, room_name: &RoomName) -> Result<(), IntelligentHouseError>;
 
-    fn add_device(
+    async fn add_device(
         &mut self,
         room_name: &RoomName,
         device_name: &DeviceName,
         device: DeviceItem,
     ) -> Result<(), IntelligentHouseError>;
 
-    fn remove_device(
+    async fn remove_device(
         &mut self,
         room_name: &RoomName,
         device_name: &DeviceName,
     ) -> Result<(), IntelligentHouseError>;
 }
 
-pub struct HouseDeviceSynchronizer<'a, T: DeviceInventory> {
-    house: &'a mut IntelligentHouse,
-    inventory: &'a mut T,
+pub struct HouseDeviceSynchronizer<T: DeviceInventory> {
+    house: Arc<Mutex<IntelligentHouse>>,
+    inventory: T,
 }
 
-impl<'a, T: DeviceInventory> HouseDeviceSynchronizer<'a, T> {
-    pub fn new(
-        house: &'a mut IntelligentHouse,
-        inventory: &'a mut T,
-    ) -> HouseDeviceSynchronizer<'a, T> {
+impl<T: DeviceInventory> HouseDeviceSynchronizer<T> {
+    pub fn new(house: Arc<Mutex<IntelligentHouse>>, inventory: T) -> HouseDeviceSynchronizer<T> {
         HouseDeviceSynchronizer { house, inventory }
     }
 }
 
-impl<'a, T: DeviceInventory> DeviceSynchronizer for HouseDeviceSynchronizer<'a, T> {
-    fn add_room(&mut self, room_name: &RoomName) -> Result<(), IntelligentHouseError> {
-        self.house.add_room(room_name)?;
-        self.inventory.add_room(room_name)?;
+#[async_trait]
+impl<T: DeviceInventory + Send + Sync> DeviceSynchronizer for HouseDeviceSynchronizer<T> {
+    async fn add_room(&mut self, room_name: &RoomName) -> Result<(), IntelligentHouseError> {
+        self.house.lock().await.add_room(room_name)?;
+        self.inventory.add_room(room_name).await?;
         Ok(())
     }
 
-    fn remove_room(&mut self, room_name: &RoomName) -> Result<(), IntelligentHouseError> {
-        self.house.remove_room(room_name)?;
+    async fn remove_room(&mut self, room_name: &RoomName) -> Result<(), IntelligentHouseError> {
+        self.house.lock().await.remove_room(room_name)?;
         self.inventory.remove_room(room_name)?;
         Ok(())
     }
 
-    fn add_device(
+    async fn add_device(
         &mut self,
         room_name: &RoomName,
         device_name: &DeviceName,
         device: DeviceItem,
     ) -> Result<(), IntelligentHouseError> {
-        self.house.add_device(room_name, device_name)?;
+        self.house.lock().await.add_device(room_name, device_name)?;
         self.inventory.add_device(room_name, device_name, device)?;
         Ok(())
     }
 
-    fn remove_device(
+    async fn remove_device(
         &mut self,
         room_name: &RoomName,
         device_name: &DeviceName,
     ) -> Result<(), IntelligentHouseError> {
-        self.house.remove_device(room_name, device_name)?;
+        self.house
+            .lock()
+            .await
+            .remove_device(room_name, device_name)?;
         self.inventory.remove_device(room_name, device_name)?;
         Ok(())
     }

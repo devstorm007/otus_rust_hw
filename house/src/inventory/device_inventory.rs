@@ -1,7 +1,10 @@
+use async_trait::async_trait;
+
 use crate::errors::intelligent_house_error::InventoryError;
 use crate::house::intelligent_house::*;
 use crate::DeviceItem;
 
+#[async_trait]
 pub trait DeviceInventory {
     fn get_info(
         &self,
@@ -9,7 +12,9 @@ pub trait DeviceInventory {
         device_name: &DeviceName,
     ) -> Result<String, InventoryError>;
 
-    fn add_room(&self, room_name: &RoomName) -> Result<(), InventoryError>;
+    async fn get_rooms(&self) -> Result<Vec<RoomName>, InventoryError>;
+
+    async fn add_room(&self, room_name: &RoomName) -> Result<(), InventoryError>;
 
     fn remove_room(&self, room_name: &RoomName) -> Result<(), InventoryError>;
 

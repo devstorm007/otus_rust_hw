@@ -3,6 +3,7 @@ use std::hash::Hash;
 
 use derive_more::Display;
 use parking_lot::RwLock;
+use serde::Serialize;
 
 use crate::errors::intelligent_house_error::HouseError;
 use crate::errors::intelligent_house_error::HouseError::*;
@@ -149,8 +150,8 @@ pub struct Room {
 #[derive(Debug, Display)]
 pub struct HouseName(pub String);
 
-#[derive(Eq, PartialEq, Hash, Debug, Clone, Display)]
+#[derive(Eq, PartialEq, Hash, Debug, Clone, Display, Serialize)]
 pub struct RoomName(pub String);
 
-#[derive(Eq, PartialEq, Hash, Debug, Clone, Display)]
+#[derive(Eq, PartialEq, Hash, Debug, Clone, Display, Serialize)]
 pub struct DeviceName(pub String);

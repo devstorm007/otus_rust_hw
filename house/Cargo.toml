@@ -13,3 +13,6 @@ thiserror = "1.0"
 derive_more = "0.99.0"
 parking_lot = "0.12.1"
 rand = "0.8.5"
+serde = { version = "1.0.145", features = ["derive"] }
+async-trait = "0.1.57"
+tokio = { version = "1.20.1", features = ["full"] }
