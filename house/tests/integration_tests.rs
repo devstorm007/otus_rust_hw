@@ -3,6 +3,8 @@ use std::collections::HashMap;
 use house::devices::device_info::DeviceInfo;
 use house::devices::power_socket::*;
 use house::devices::temperature_sensor::{SensorRange, TemperatureSensor};
+use house::house::domain::*;
+use house::house::house_storage::HouseStorage;
 use house::house::intelligent_house::*;
 use house::inventory::device_inventory::DeviceInventory;
 use house::inventory::memory_device_inventory::{DeviceItem, MemoryDeviceInventory};
@@ -155,7 +157,7 @@ fn test_house_report() {
         devices: vec![socket_name, sensor_name],
     };
 
-    let house = IntelligentHouse::from("house1", vec![room]);
+    let house = IntelligentHouse::create("house1", vec![room]);
 
     let report = house.generate_report(&mdi).unwrap();
 

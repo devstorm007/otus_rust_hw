@@ -1,45 +1,45 @@
 use std::fmt::Debug;
-use std::hash::Hash;
+use std::sync::Arc;
 
-use derive_more::Display;
 use parking_lot::RwLock;
-use serde::Serialize;
 
 use crate::errors::intelligent_house_error::HouseError;
 use crate::errors::intelligent_house_error::HouseError::*;
+use crate::house::domain::{DeviceName, HouseName, Room, RoomName};
+use crate::house::house_storage::HouseStorage;
 use crate::inventory::device_inventory::DeviceInventory;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct IntelligentHouse {
     pub name: HouseName,
-    pub rooms: RwLock<Vec<Room>>,
+    pub rooms: Arc<RwLock<Vec<Room>>>,
 }
 
 impl IntelligentHouse {
-    pub fn from(name: &str, rooms: Vec<Room>) -> Self {
+    pub fn create(name: &str, rooms: Vec<Room>) -> Self {
         IntelligentHouse {
             name: HouseName(name.to_string()),
-            rooms: RwLock::new(rooms),
+            rooms: Arc::new(RwLock::new(rooms)),
         }
     }
+}
 
-    pub fn get_rooms(&self) -> Vec<RoomName> {
+impl HouseStorage for IntelligentHouse {
+    fn get_rooms(&self) -> Vec<RoomName> {
         self.rooms
             .read()
             .iter()
             .map(|room| room.name.clone())
             .collect()
     }
-
-    pub fn get_room(&self, room_name: &RoomName) -> Option<Room> {
+    fn get_room(&self, room_name: &RoomName) -> Option<Room> {
         self.rooms
             .read()
             .iter()
             .find(|r| r.name == *room_name)
             .cloned()
     }
-
-    pub fn add_room(&mut self, room_name: &RoomName) -> Result<(), HouseError> {
+    fn add_room(&mut self, room_name: &RoomName) -> Result<(), HouseError> {
         let mut rooms = self.rooms.write();
         if rooms.iter().any(|r| r.name == *room_name) {
             Err(RoomAlreadyAdded(room_name.clone()))
@@ -51,8 +51,7 @@ impl IntelligentHouse {
             Ok(())
         }
     }
-
-    pub fn remove_room(&mut self, room_name: &RoomName) -> Result<(), HouseError> {
+    fn remove_room(&mut self, room_name: &RoomName) -> Result<(), HouseError> {
         let mut rooms = self.rooms.write();
         rooms
             .iter()
@@ -62,8 +61,7 @@ impl IntelligentHouse {
             })
             .ok_or_else(|| RoomNotFound(room_name.clone()))
     }
-
-    pub fn get_devices(&self, room_name: &RoomName) -> Result<Vec<DeviceName>, HouseError> {
+    fn get_devices(&self, room_name: &RoomName) -> Result<Vec<DeviceName>, HouseError> {
         self.rooms
             .read()
             .iter()
@@ -71,8 +69,7 @@ impl IntelligentHouse {
             .map(|r| r.devices.clone())
             .ok_or_else(|| RoomNotFound(room_name.clone()))
     }
-
-    pub fn add_device(
+    fn add_device(
         &mut self,
         room_name: &RoomName,
         device_name: &DeviceName,
@@ -93,8 +90,7 @@ impl IntelligentHouse {
             Ok(())
         }
     }
-
-    pub fn remove_device(
+    fn remove_device(
         &mut self,
         room_name: &RoomName,
         device_name: &DeviceName,
@@ -111,8 +107,7 @@ impl IntelligentHouse {
             .map(|index| room.devices.swap_remove(index))
             .ok_or_else(|| RoomDeviceNotFound(device_name.clone(), room_name.clone()))
     }
-
-    pub fn generate_report<T: DeviceInventory>(&self, inventory: &T) -> Result<String, HouseError> {
+    fn generate_report<T: DeviceInventory>(&self, inventory: &T) -> Result<String, HouseError> {
         let room_names = self.get_rooms();
 
         let prefix_msg = format!("'{}' contains {} rooms:\n", self.name.0, room_names.len());
@@ -140,18 +135,3 @@ impl IntelligentHouse {
             })
     }
 }
-
-#[derive(Debug, Clone)]
-pub struct Room {
-    pub name: RoomName,
-    pub devices: Vec<DeviceName>,
-}
-
-#[derive(Debug, Display)]
-pub struct HouseName(pub String);
-
-#[derive(Eq, PartialEq, Hash, Debug, Clone, Display, Serialize)]
-pub struct RoomName(pub String);
-
-#[derive(Eq, PartialEq, Hash, Debug, Clone, Display, Serialize)]
-pub struct DeviceName(pub String);

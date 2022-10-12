@@ -12,7 +12,7 @@ use crate::devices::power_socket::PowerSocket;
 use crate::devices::temperature_sensor::TemperatureSensor;
 use crate::errors::intelligent_house_error::InventoryError;
 use crate::errors::intelligent_house_error::InventoryError::*;
-use crate::house::intelligent_house::*;
+use crate::house::domain::*;
 use crate::inventory::device_inventory::DeviceInventory;
 
 #[derive(Default, Clone)]
@@ -70,7 +70,7 @@ impl DeviceInventory for MemoryDeviceInventory {
         }
     }
 
-    fn remove_room(&self, room_name: &RoomName) -> Result<(), InventoryError> {
+    async fn remove_room(&self, room_name: &RoomName) -> Result<(), InventoryError> {
         self.room_devices
             .write()
             .remove(room_name)
@@ -78,7 +78,7 @@ impl DeviceInventory for MemoryDeviceInventory {
             .ok_or_else(|| InventoryRoomNotFound(room_name.clone()))
     }
 
-    fn add_device(
+    async fn add_device(
         &mut self,
         room_name: &RoomName,
         device_name: &DeviceName,
@@ -98,7 +98,7 @@ impl DeviceInventory for MemoryDeviceInventory {
         }
     }
 
-    fn remove_device(
+    async fn remove_device(
         &self,
         room_name: &RoomName,
         device_name: &DeviceName,
@@ -116,11 +116,11 @@ impl DeviceInventory for MemoryDeviceInventory {
         }
     }
 
-    fn change_device(
+    async fn change_device(
         &mut self,
         room_name: &RoomName,
         device_name: &DeviceName,
-        modify: impl Fn(DeviceItem) -> Result<DeviceItem, InventoryError>,
+        modify: impl Fn(DeviceItem) -> Result<DeviceItem, InventoryError> + Send,
     ) -> std::result::Result<(), InventoryError> {
         match self.room_devices.write().get_mut(room_name) {
             Some(devices) => match devices.entry(device_name.clone()) {
@@ -138,7 +138,7 @@ impl DeviceInventory for MemoryDeviceInventory {
         }
     }
 
-    fn get_device(
+    async fn get_device(
         &self,
         room_name: &RoomName,
         device_name: &DeviceName,

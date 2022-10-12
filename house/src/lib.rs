@@ -5,6 +5,7 @@ use std::collections::HashMap;
 
 use crate::devices::power_socket::{PowerSocket, SocketType};
 use crate::devices::temperature_sensor::{SensorRange, TemperatureSensor};
+use crate::house::domain::*;
 use crate::house::intelligent_house::*;
 use crate::inventory::memory_device_inventory::{DeviceItem, MemoryDeviceInventory};
 
@@ -120,5 +121,5 @@ pub fn mk_three_rooms_house(names: ThreeRoomNames) -> IntelligentHouse {
         devices: vec![names.socket4, names.sensor1],
     };
 
-    IntelligentHouse::from("bachelor's house", vec![bedroom, kitchen, lounge])
+    IntelligentHouse::create("bachelor's house", vec![bedroom, kitchen, lounge])
 }

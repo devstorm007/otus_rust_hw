@@ -17,7 +17,7 @@ use house::devices::power_socket::PowerSocket;
 use house::devices::temperature_sensor::TemperatureSensor;
 use house::errors::intelligent_house_error::IntelligentHouseError;
 use house::errors::intelligent_house_error::InventoryError;
-use house::house::intelligent_house::{DeviceName, RoomName};
+use house::house::domain::*;
 use house::inventory::device_inventory::DeviceInventory;
 use house::inventory::memory_device_inventory::DeviceItem;
 use tcp_exchange::tcp_server::TcpServer;
@@ -167,6 +167,7 @@ impl HouseServer {
                             ))
                         ]),
                     })
+                    .await
                     .map_err(IntelligentHouseError::InventoryError)?;
 
                 Ok(ResponseMessage {
@@ -210,7 +211,9 @@ impl HouseServer {
                 for dm in device_monitors.iter() {
                     let (client_address, location) = dm.pair();
 
-                    let data = Self::get_device_data(location, device_inventory.clone()).unwrap();
+                    let data = Self::get_device_data(location, device_inventory.clone())
+                        .await
+                        .unwrap();
                     udp_server.lock().await
                       .send(client_address, data.as_slice())
                       .await
@@ -225,7 +228,7 @@ impl HouseServer {
         });
     }
 
-    fn get_device_data(
+    async fn get_device_data(
         location: &DeviceLocation,
         device_inventory: impl DeviceInventory,
     ) -> Result<Vec<u8>, HouseExchangeError> {
@@ -234,6 +237,7 @@ impl HouseServer {
                 &RoomName(location.room_name.clone()),
                 &DeviceName(location.device_name.clone()),
             )
+            .await
             .map_err(IntelligentHouseError::InventoryError)?;
 
         let body = device.fold(hlist![
