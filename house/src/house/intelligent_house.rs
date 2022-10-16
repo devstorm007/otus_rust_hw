@@ -1,6 +1,9 @@
 use std::fmt::Debug;
 use std::sync::Arc;
 
+use async_trait::async_trait;
+use futures::future;
+use futures::stream::{self, StreamExt};
 use parking_lot::RwLock;
 
 use crate::errors::intelligent_house_error::HouseError;
@@ -24,22 +27,25 @@ impl IntelligentHouse {
     }
 }
 
+#[async_trait]
 impl HouseStorage for IntelligentHouse {
-    fn get_rooms(&self) -> Vec<RoomName> {
+    async fn get_rooms(&self) -> Vec<RoomName> {
         self.rooms
             .read()
             .iter()
             .map(|room| room.name.clone())
             .collect()
     }
-    fn get_room(&self, room_name: &RoomName) -> Option<Room> {
+
+    async fn get_room(&self, room_name: &RoomName) -> Option<Room> {
         self.rooms
             .read()
             .iter()
             .find(|r| r.name == *room_name)
             .cloned()
     }
-    fn add_room(&mut self, room_name: &RoomName) -> Result<(), HouseError> {
+
+    async fn add_room(&mut self, room_name: &RoomName) -> Result<(), HouseError> {
         let mut rooms = self.rooms.write();
         if rooms.iter().any(|r| r.name == *room_name) {
             Err(RoomAlreadyAdded(room_name.clone()))
@@ -51,7 +57,8 @@ impl HouseStorage for IntelligentHouse {
             Ok(())
         }
     }
-    fn remove_room(&mut self, room_name: &RoomName) -> Result<(), HouseError> {
+
+    async fn remove_room(&mut self, room_name: &RoomName) -> Result<(), HouseError> {
         let mut rooms = self.rooms.write();
         rooms
             .iter()
@@ -61,7 +68,8 @@ impl HouseStorage for IntelligentHouse {
             })
             .ok_or_else(|| RoomNotFound(room_name.clone()))
     }
-    fn get_devices(&self, room_name: &RoomName) -> Result<Vec<DeviceName>, HouseError> {
+
+    async fn get_devices(&self, room_name: &RoomName) -> Result<Vec<DeviceName>, HouseError> {
         self.rooms
             .read()
             .iter()
@@ -69,7 +77,8 @@ impl HouseStorage for IntelligentHouse {
             .map(|r| r.devices.clone())
             .ok_or_else(|| RoomNotFound(room_name.clone()))
     }
-    fn add_device(
+
+    async fn add_device(
         &mut self,
         room_name: &RoomName,
         device_name: &DeviceName,
@@ -90,7 +99,8 @@ impl HouseStorage for IntelligentHouse {
             Ok(())
         }
     }
-    fn remove_device(
+
+    async fn remove_device(
         &mut self,
         room_name: &RoomName,
         device_name: &DeviceName,
@@ -107,31 +117,49 @@ impl HouseStorage for IntelligentHouse {
             .map(|index| room.devices.swap_remove(index))
             .ok_or_else(|| RoomDeviceNotFound(device_name.clone(), room_name.clone()))
     }
-    fn generate_report<T: DeviceInventory>(&self, inventory: &T) -> Result<String, HouseError> {
-        let room_names = self.get_rooms();
+
+    async fn generate_report<T: DeviceInventory + Sync>(
+        &self,
+        inventory: &T,
+    ) -> Result<String, HouseError> {
+        let room_names = self.get_rooms().await;
 
         let prefix_msg = format!("'{}' contains {} rooms:\n", self.name.0, room_names.len());
 
-        room_names
-            .iter()
-            .fold(Ok(prefix_msg), |house_info, room_name| {
-                let device_names = self.get_devices(room_name)?;
+        /*let result =
+        future::try_join_all(
+            ids.iter().map(|id| Foo::get(*id))
+        )
+            .await
+            .unwrap();*/
 
-                let devices_info =
-                    device_names
-                        .iter()
-                        .fold("".to_string(), |acc_dev_info, device_name| {
-                            let _dev_info: String = inventory
-                                .get_info(room_name, device_name)
-                                .unwrap_or_else(|e| format!("{e}"));
+        /*let a = future::ok::<i32, i32>(1);
+        assert_eq!(a.await, Ok(1));*/
 
-                            format!("{acc_dev_info}     {_dev_info}\n")
-                        });
+        //let sum = number_stream.fold(0, |acc, x| async move { acc + x });
 
-                Ok(format!(
-                    "{}   '{}' has:\n{}\n",
-                    house_info?, room_name.0, devices_info
-                ))
-            })
+        //let it = stream::iter(room_names);
+
+        /*let res = room_names.iter().fold(prefix_msg, |house_info, room_name| {
+            let device_names = self.get_devices(room_name).await?;
+
+            let devices_info =
+                device_names
+                    .iter()
+                    .fold("".to_string(), |acc_dev_info, device_name| {
+                        let _dev_info: String = inventory
+                            .get_info(room_name, device_name)
+                            .unwrap_or_else(|e| format!("{e}"));
+
+                        format!("{acc_dev_info}     {_dev_info}\n")
+                    });
+
+            Ok(format!(
+                "{}   '{}' has:\n{}\n",
+                house_info?, room_name.0, devices_info
+            ))
+        });*/
+
+        Ok("".to_string())
     }
 }

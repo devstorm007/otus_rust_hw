@@ -1,5 +1,6 @@
 extern crate derive_more;
 extern crate frunk;
+extern crate futures;
 
 use std::collections::HashMap;
 
