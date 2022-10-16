@@ -6,7 +6,7 @@ use crate::error::HouseApiError;
 use crate::error::HouseApiError::IOError;
 use actix_web::{web, web::Data, App, HttpServer};
 //use house::inventory::memory_device_inventory::MemoryDeviceInventory;
-//use mongodb::Client;
+use mongodb::Client;
 use tokio::task;
 use tokio::task::JoinHandle;
 
@@ -29,15 +29,11 @@ impl HouseAPI {
 
     async fn execute<Addrs: ToSocketAddrs>(address: Addrs) -> Result<(), HouseApiError> /*-> Server*/
     {
-        //let db_client = Client::with_uri_str("mongodb://root:example@localhost:27017").await?;
-
+        let db_client = Client::with_uri_str("mongodb://root:example@localhost:27017").await?;
+        let db = db_client.database("otus");
         let server = HttpServer::new(move || {
-            /*let device_inventory: MemoryDeviceInventory =
-            house::mk_three_rooms_inventory(house::ThreeRoomNames::default());*/
-            //let database = db_client.database("house");
-
             App::new()
-                .app_data(Data::new(AppState::new()))
+                .app_data(Data::new(AppState::new(db.clone())))
                 /*.service(web::resource("/users").route(web::post().to(users::web::save_new)))*/
                 .service(web::resource("/rooms").route(web::get().to(get_rooms)))
         })
