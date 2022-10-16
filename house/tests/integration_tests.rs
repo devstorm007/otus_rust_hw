@@ -54,8 +54,8 @@ fn test_sensor_info() {
     );
 }
 
-#[test]
-fn test_inventory_socket_info() {
+#[tokio::test]
+async fn test_inventory_socket_info() {
     let room_name = RoomName("room1".to_string());
     let device_name = DeviceName("socket1".to_string());
 
@@ -74,7 +74,7 @@ fn test_inventory_socket_info() {
 
     let mdi = MemoryDeviceInventory::new(power_sockets);
 
-    let device_info = mdi.get_info(&room_name, &device_name);
+    let device_info = mdi.get_info(&room_name, &device_name).await;
 
     assert_eq!(
         device_info.unwrap(),
@@ -87,8 +87,8 @@ fn test_inventory_socket_info() {
     );
 }
 
-#[test]
-fn test_inventory_sensor_info() {
+#[tokio::test]
+async fn test_inventory_sensor_info() {
     let room_name = RoomName("room1".to_string());
     let device_name = DeviceName("sensor1".to_string());
 
@@ -109,7 +109,7 @@ fn test_inventory_sensor_info() {
     let device_info = mdi.get_info(&room_name, &device_name);
 
     assert_eq!(
-        device_info.unwrap(),
+        device_info.await.unwrap(),
         "TS 'sensor1' specification:
                 - 26C° 
                 - range 10-40C° 
@@ -117,8 +117,8 @@ fn test_inventory_sensor_info() {
     );
 }
 
-#[test]
-fn test_house_report() {
+#[tokio::test]
+async fn test_house_report() {
     let room_name = RoomName("room1".to_string());
     let socket_name = DeviceName("socket1".to_string());
     let sensor_name = DeviceName("sensor1".to_string());
@@ -159,7 +159,7 @@ fn test_house_report() {
 
     let house = IntelligentHouse::create("house1", vec![room]);
 
-    let report = house.generate_report(&mdi).unwrap();
+    let report = house.generate_report(&mdi).await.unwrap();
 
     assert_eq!(
         report.trim(),

@@ -6,7 +6,8 @@ use house::house::house_storage::HouseStorage;
 use house::house::intelligent_house::IntelligentHouse;
 use house::inventory::memory_device_inventory::{DeviceItem, MemoryDeviceInventory};
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let kitchen_name = RoomName("kitchen".to_string());
     let kitchen = Room {
         name: kitchen_name.clone(),
@@ -29,7 +30,7 @@ fn main() {
 
     let inventory: MemoryDeviceInventory = MemoryDeviceInventory::new(power_sockets);
 
-    let _report = house.generate_report(&inventory).unwrap();
+    let _report = house.generate_report(&inventory).await.unwrap();
 
     println!("{_report}");
 }

@@ -44,13 +44,13 @@ impl<T: DeviceInventory> HouseDeviceSynchronizer<T> {
 #[async_trait]
 impl<T: DeviceInventory + Send + Sync> DeviceSynchronizer for HouseDeviceSynchronizer<T> {
     async fn add_room(&mut self, room_name: &RoomName) -> Result<(), IntelligentHouseError> {
-        self.house.lock().await.add_room(room_name)?;
+        self.house.lock().await.add_room(room_name).await?;
         self.inventory.add_room(room_name).await?;
         Ok(())
     }
 
     async fn remove_room(&mut self, room_name: &RoomName) -> Result<(), IntelligentHouseError> {
-        self.house.lock().await.remove_room(room_name)?;
+        self.house.lock().await.remove_room(room_name).await?;
         self.inventory.remove_room(room_name).await?;
         Ok(())
     }
@@ -61,7 +61,11 @@ impl<T: DeviceInventory + Send + Sync> DeviceSynchronizer for HouseDeviceSynchro
         device_name: &DeviceName,
         device: DeviceItem,
     ) -> Result<(), IntelligentHouseError> {
-        self.house.lock().await.add_device(room_name, device_name)?;
+        self.house
+            .lock()
+            .await
+            .add_device(room_name, device_name)
+            .await?;
         self.inventory
             .add_device(room_name, device_name, device)
             .await?;
@@ -76,7 +80,8 @@ impl<T: DeviceInventory + Send + Sync> DeviceSynchronizer for HouseDeviceSynchro
         self.house
             .lock()
             .await
-            .remove_device(room_name, device_name)?;
+            .remove_device(room_name, device_name)
+            .await?;
         self.inventory.remove_device(room_name, device_name).await?;
         Ok(())
     }

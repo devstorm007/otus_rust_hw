@@ -14,7 +14,12 @@ async fn main() {
     let house = Arc::new(Mutex::new(mk_three_rooms_house(room_device_names.clone())));
     let inventory = mk_three_rooms_inventory(room_device_names.clone());
 
-    let _report = house.lock().await.generate_report(&inventory).unwrap();
+    let _report = house
+        .lock()
+        .await
+        .generate_report(&inventory)
+        .await
+        .unwrap();
     println!("{_report}");
 
     let mut sync = HouseDeviceSynchronizer::new(house.clone(), inventory.clone());
@@ -40,6 +45,11 @@ async fn main() {
 
     sync.remove_room(&room_device_names.bedroom).await.unwrap();
 
-    let _report_after_change = house.lock().await.generate_report(&inventory).unwrap();
+    let _report_after_change = house
+        .lock()
+        .await
+        .generate_report(&inventory)
+        .await
+        .unwrap();
     println!("{_report_after_change}");
 }

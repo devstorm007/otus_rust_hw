@@ -34,7 +34,7 @@ impl MemoryDeviceInventory {
 
 #[async_trait]
 impl DeviceInventory for MemoryDeviceInventory {
-    fn get_info(
+    async fn get_info(
         &self,
         room_name: &RoomName,
         device_name: &DeviceName,

@@ -180,6 +180,7 @@ impl HouseServer {
                         &RoomName(location.room_name),
                         &DeviceName(location.device_name),
                     )
+                    .await
                     .map_err(IntelligentHouseError::InventoryError)?;
 
                 Ok(ResponseMessage {

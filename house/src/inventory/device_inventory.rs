@@ -6,7 +6,7 @@ use crate::DeviceItem;
 
 #[async_trait]
 pub trait DeviceInventory {
-    fn get_info(
+    async fn get_info(
         &self,
         room_name: &RoomName,
         device_name: &DeviceName,

@@ -15,7 +15,7 @@ impl<T: DeviceInventory, H: HouseStorage> DataService<T, H> {
     }
 
     pub async fn get_rooms(&self) -> Result<Vec<RoomName>, InventoryError> {
-        let rooms = self.house.get_rooms();
+        let rooms = self.house.get_rooms().await;
         Ok(rooms)
     }
 }

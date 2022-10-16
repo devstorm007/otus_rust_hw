@@ -2,7 +2,6 @@ use std::fmt::Debug;
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use futures::future;
 use futures::stream::{self, StreamExt};
 use parking_lot::RwLock;
 
@@ -126,40 +125,29 @@ impl HouseStorage for IntelligentHouse {
 
         let prefix_msg = format!("'{}' contains {} rooms:\n", self.name.0, room_names.len());
 
-        /*let result =
-        future::try_join_all(
-            ids.iter().map(|id| Foo::get(*id))
-        )
+        stream::iter(room_names)
+            .fold(Ok(prefix_msg), |house_info, room_name| async move {
+                let device_names = self.get_devices(&room_name).await?;
+
+                let (devices_info, _) = stream::iter(device_names)
+                    .fold(
+                        ("".to_string(), room_name.clone()),
+                        |(acc_dev_info, rn), device_name| async move {
+                            let _dev_info: String = inventory
+                                .get_info(&rn, &device_name)
+                                .await
+                                .unwrap_or_else(|e| format!("{e}"));
+
+                            (format!("{acc_dev_info}     {_dev_info}\n"), rn)
+                        },
+                    )
+                    .await;
+
+                Ok(format!(
+                    "{}   '{}' has:\n{}\n",
+                    house_info?, room_name.0, devices_info
+                ))
+            })
             .await
-            .unwrap();*/
-
-        /*let a = future::ok::<i32, i32>(1);
-        assert_eq!(a.await, Ok(1));*/
-
-        //let sum = number_stream.fold(0, |acc, x| async move { acc + x });
-
-        //let it = stream::iter(room_names);
-
-        /*let res = room_names.iter().fold(prefix_msg, |house_info, room_name| {
-            let device_names = self.get_devices(room_name).await?;
-
-            let devices_info =
-                device_names
-                    .iter()
-                    .fold("".to_string(), |acc_dev_info, device_name| {
-                        let _dev_info: String = inventory
-                            .get_info(room_name, device_name)
-                            .unwrap_or_else(|e| format!("{e}"));
-
-                        format!("{acc_dev_info}     {_dev_info}\n")
-                    });
-
-            Ok(format!(
-                "{}   '{}' has:\n{}\n",
-                house_info?, room_name.0, devices_info
-            ))
-        });*/
-
-        Ok("".to_string())
     }
 }
