@@ -1,11 +1,13 @@
+use std::sync::Arc;
+
+use tokio::sync::Mutex;
+
 use house::devices::power_socket::{PowerSocket, SocketType};
 use house::house::domain::*;
-use house::house::house_storage::HouseStorage;
-use house::inventory::memory_device_inventory::DeviceItem;
+use house::house::intelligent_house::IntelligentHouse;
+use house::inventory::domain::DeviceItem;
 use house::synchronizer::device_synchronizer::{DeviceSynchronizer, HouseDeviceSynchronizer};
 use house::{mk_three_rooms_house, mk_three_rooms_inventory, ThreeRoomNames};
-use std::sync::Arc;
-use tokio::sync::Mutex;
 
 #[tokio::main]
 async fn main() {

@@ -18,6 +18,7 @@ parking_lot = "0.12.1"
 dashmap = "5.3.4"
 tokio = { version = "1.20.1", features = ["full"] }
 async-trait = "0.1.57"
+futures = "0.3.24"
 
 exchange_protocol = { path = "../exchange_protocol" }
 house = { path = "../house" }

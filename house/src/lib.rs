@@ -7,8 +7,9 @@ use std::collections::HashMap;
 use crate::devices::power_socket::{PowerSocket, SocketType};
 use crate::devices::temperature_sensor::{SensorRange, TemperatureSensor};
 use crate::house::domain::*;
-use crate::house::intelligent_house::*;
-use crate::inventory::memory_device_inventory::{DeviceItem, MemoryDeviceInventory};
+use crate::house::memory_intelligent_house::*;
+use crate::inventory::domain::DeviceItem;
+use crate::inventory::memory_device_inventory::MemoryDeviceInventory;
 
 pub mod devices;
 pub mod errors;
@@ -108,7 +109,7 @@ pub fn mk_three_rooms_inventory(names: ThreeRoomNames) -> MemoryDeviceInventory 
     MemoryDeviceInventory::new(devices)
 }
 
-pub fn mk_three_rooms_house(names: ThreeRoomNames) -> IntelligentHouse {
+pub fn mk_three_rooms_house(names: ThreeRoomNames) -> MemoryIntelligentHouse {
     let bedroom = Room {
         name: names.bedroom,
         devices: vec![names.socket1],
@@ -122,5 +123,5 @@ pub fn mk_three_rooms_house(names: ThreeRoomNames) -> IntelligentHouse {
         devices: vec![names.socket4, names.sensor1],
     };
 
-    IntelligentHouse::create("bachelor's house", vec![bedroom, kitchen, lounge])
+    MemoryIntelligentHouse::create("bachelor's house", vec![bedroom, kitchen, lounge])
 }

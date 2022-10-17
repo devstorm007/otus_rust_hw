@@ -1,14 +1,15 @@
-use anyhow::Result;
 use std::sync::Arc;
 
-use crate::errors::intelligent_house_error::IntelligentHouseError;
-use crate::house::domain::*;
-use crate::house::house_storage::*;
-use crate::house::intelligent_house::*;
-use crate::inventory::device_inventory::DeviceInventory;
-use crate::DeviceItem;
+use anyhow::Result;
 use async_trait::async_trait;
 use tokio::sync::Mutex;
+
+use crate::DeviceItem;
+use crate::errors::intelligent_house_error::IntelligentHouseError;
+use crate::house::domain::*;
+use crate::house::intelligent_house::*;
+use crate::house::memory_intelligent_house::*;
+use crate::inventory::device_inventory::DeviceInventory;
 
 #[async_trait]
 pub trait DeviceSynchronizer {
@@ -31,12 +32,15 @@ pub trait DeviceSynchronizer {
 }
 
 pub struct HouseDeviceSynchronizer<T: DeviceInventory> {
-    house: Arc<Mutex<IntelligentHouse>>,
+    house: Arc<Mutex<MemoryIntelligentHouse>>,
     inventory: T,
 }
 
 impl<T: DeviceInventory> HouseDeviceSynchronizer<T> {
-    pub fn new(house: Arc<Mutex<IntelligentHouse>>, inventory: T) -> HouseDeviceSynchronizer<T> {
+    pub fn new(
+        house: Arc<Mutex<MemoryIntelligentHouse>>,
+        inventory: T,
+    ) -> HouseDeviceSynchronizer<T> {
         HouseDeviceSynchronizer { house, inventory }
     }
 }

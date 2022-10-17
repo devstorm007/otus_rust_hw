@@ -4,10 +4,11 @@ use house::devices::device_info::DeviceInfo;
 use house::devices::power_socket::*;
 use house::devices::temperature_sensor::{SensorRange, TemperatureSensor};
 use house::house::domain::*;
-use house::house::house_storage::HouseStorage;
-use house::house::intelligent_house::*;
+use house::house::intelligent_house::IntelligentHouse;
+use house::house::memory_intelligent_house::*;
 use house::inventory::device_inventory::DeviceInventory;
-use house::inventory::memory_device_inventory::{DeviceItem, MemoryDeviceInventory};
+use house::inventory::domain::DeviceItem;
+use house::inventory::memory_device_inventory::MemoryDeviceInventory;
 
 #[test]
 fn test_socket_info() {
@@ -157,7 +158,7 @@ async fn test_house_report() {
         devices: vec![socket_name, sensor_name],
     };
 
-    let house = IntelligentHouse::create("house1", vec![room]);
+    let house = MemoryIntelligentHouse::create("house1", vec![room]);
 
     let report = house.generate_report(&mdi).await.unwrap();
 

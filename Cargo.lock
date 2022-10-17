@@ -2152,6 +2152,7 @@ dependencies = [
  "exchange_protocol",
  "frunk",
  "frunk_core",
+ "futures",
  "house",
  "mongodb",
  "parking_lot",

@@ -1,18 +1,18 @@
+use mongodb::Client;
+
 use crate::actions::service::DataService;
-use house::house::intelligent_house::IntelligentHouse;
-use house::inventory::memory_device_inventory::MemoryDeviceInventory;
-use mongodb::Database;
-use std::collections::HashMap;
+use crate::db::db_device_inventory::DbDeviceInventory;
+use crate::db::db_intelligent_house::DbIntelligentHouse;
 
 #[derive(Clone)]
 pub struct AppState {
-    pub data: DataService<MemoryDeviceInventory, IntelligentHouse>,
+    pub data: DataService<DbDeviceInventory, DbIntelligentHouse>,
 }
 
 impl AppState {
-    pub fn new(_db: Database) -> Self {
-        let inventory = MemoryDeviceInventory::new(HashMap::new());
-        let house = IntelligentHouse::create("", vec![]);
+    pub fn new(db_client: Client) -> Self {
+        let inventory = DbDeviceInventory::new(db_client.database("inventory"));
+        let house = DbIntelligentHouse::new(db_client.database("house"));
         AppState {
             data: DataService::create(inventory, house),
         }

@@ -2,7 +2,7 @@ use async_trait::async_trait;
 
 use crate::errors::intelligent_house_error::InventoryError;
 use crate::house::domain::*;
-use crate::DeviceItem;
+use crate::inventory::domain::DeviceItem;
 
 #[async_trait]
 pub trait DeviceInventory {

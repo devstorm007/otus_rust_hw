@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use async_trait::async_trait;
-use frunk::{hlist, Coprod};
+use frunk::hlist;
 use parking_lot::RwLock;
 
 use crate::devices::device_info::DeviceInfo;
@@ -14,13 +14,12 @@ use crate::errors::intelligent_house_error::InventoryError;
 use crate::errors::intelligent_house_error::InventoryError::*;
 use crate::house::domain::*;
 use crate::inventory::device_inventory::DeviceInventory;
+use crate::inventory::domain::DeviceItem;
 
 #[derive(Default, Clone)]
 pub struct MemoryDeviceInventory {
     room_devices: Arc<RwLock<HashMap<RoomName, HashMap<DeviceName, DeviceItem>>>>,
 }
-
-pub type DeviceItem = Coprod!(PowerSocket, TemperatureSensor);
 
 impl MemoryDeviceInventory {
     pub fn new(

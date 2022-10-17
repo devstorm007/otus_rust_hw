@@ -2,9 +2,10 @@ use std::collections::HashMap;
 
 use house::devices::power_socket::{PowerSocket, SocketType};
 use house::house::domain::*;
-use house::house::house_storage::HouseStorage;
 use house::house::intelligent_house::IntelligentHouse;
-use house::inventory::memory_device_inventory::{DeviceItem, MemoryDeviceInventory};
+use house::house::memory_intelligent_house::MemoryIntelligentHouse;
+use house::inventory::domain::DeviceItem;
+use house::inventory::memory_device_inventory::MemoryDeviceInventory;
 
 #[tokio::main]
 async fn main() {
@@ -13,7 +14,8 @@ async fn main() {
         name: kitchen_name.clone(),
         devices: Vec::from([DeviceName("socket 220V".to_string())]),
     };
-    let house: IntelligentHouse = IntelligentHouse::create("kitchen house", Vec::from([kitchen]));
+    let house: MemoryIntelligentHouse =
+        MemoryIntelligentHouse::create("kitchen house", Vec::from([kitchen]));
 
     let power_sockets = HashMap::from([(
         kitchen_name,

@@ -19,13 +19,13 @@ use house::errors::intelligent_house_error::IntelligentHouseError;
 use house::errors::intelligent_house_error::InventoryError;
 use house::house::domain::*;
 use house::inventory::device_inventory::DeviceInventory;
-use house::inventory::memory_device_inventory::DeviceItem;
+use house::inventory::domain::DeviceItem;
 use tcp_exchange::tcp_server::TcpServer;
 use udp_exchange::udp_server::UdpServer;
 
+use crate::domain::{DeviceData, DeviceLocation, RequestBody, RequestMessage, ResponseMessage};
 use crate::domain::RequestBody::*;
 use crate::domain::ResponseBody::*;
-use crate::domain::{DeviceData, DeviceLocation, RequestBody, RequestMessage, ResponseMessage};
 use crate::error::HouseExchangeError;
 
 #[derive(Clone)]

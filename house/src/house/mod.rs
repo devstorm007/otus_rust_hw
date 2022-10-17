@@ -1,3 +1,3 @@
 pub mod domain;
-pub mod house_storage;
 pub mod intelligent_house;
+pub mod memory_intelligent_house;
