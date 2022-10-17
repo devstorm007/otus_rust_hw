@@ -12,7 +12,7 @@ pub struct AppState {
 impl AppState {
     pub fn new(db_client: Client) -> Self {
         let inventory = DbDeviceInventory::new(db_client.database("inventory"));
-        let house = DbIntelligentHouse::new(db_client.database("house"));
+        let house = DbIntelligentHouse::new("Plaza house", db_client.database("house"));
         AppState {
             data: DataService::create(inventory, house),
         }

@@ -1,5 +1,6 @@
-use house::errors::intelligent_house_error::InventoryError;
-use house::house::domain::RoomName;
+use house::errors::intelligent_house_error::IntelligentHouseError;
+use house::errors::intelligent_house_error::IntelligentHouseError::HouseError;
+use house::house::domain::Room;
 use house::house::intelligent_house::IntelligentHouse;
 use house::inventory::device_inventory::DeviceInventory;
 
@@ -14,8 +15,7 @@ impl<T: DeviceInventory, H: IntelligentHouse> DataService<T, H> {
         DataService { inventory, house }
     }
 
-    pub async fn get_rooms(&self) -> Result<Vec<RoomName>, InventoryError> {
-        let rooms = self.house.get_rooms().await;
-        Ok(rooms)
+    pub async fn get_rooms(&self) -> Result<Vec<Room>, IntelligentHouseError> {
+        self.house.get_rooms().await.map_err(HouseError)
     }
 }

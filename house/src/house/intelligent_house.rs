@@ -6,9 +6,9 @@ use crate::inventory::device_inventory::DeviceInventory;
 
 #[async_trait]
 pub trait IntelligentHouse {
-    async fn get_rooms(&self) -> Vec<RoomName>;
+    async fn get_rooms(&self) -> Result<Vec<Room>, HouseError>;
 
-    async fn get_room(&self, room_name: &RoomName) -> Option<Room>;
+    async fn get_room(&self, room_name: &RoomName) -> Result<Room, HouseError>;
 
     async fn add_room(&mut self, room_name: &RoomName) -> Result<(), HouseError>;
 
@@ -26,7 +26,7 @@ pub trait IntelligentHouse {
         &mut self,
         room_name: &RoomName,
         device_name: &DeviceName,
-    ) -> Result<DeviceName, HouseError>;
+    ) -> Result<(), HouseError>;
 
     async fn generate_report<T: DeviceInventory + Sync>(
         &self,

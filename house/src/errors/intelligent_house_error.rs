@@ -1,8 +1,11 @@
+use serde::Serialize;
+use std::fmt::Debug;
 use thiserror::Error;
 
+use crate::errors::intelligent_house_error::HouseError::InternalError;
 use crate::{DeviceName, RoomName};
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Serialize)]
 pub enum IntelligentHouseError {
     #[error("inventory error `{0}` raised")]
     InventoryError(#[from] InventoryError),
@@ -11,7 +14,7 @@ pub enum IntelligentHouseError {
     HouseError(#[from] HouseError),
 }
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Serialize)]
 pub enum InventoryError {
     #[error("inventory device `{0}` not found")]
     InventoryDeviceNotFound(DeviceName, RoomName),
@@ -35,7 +38,7 @@ pub enum InventoryError {
     InventoryRoomAlreadyAdded(RoomName),
 }
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Serialize)]
 pub enum HouseError {
     #[error("room `{0}` not found")]
     RoomNotFound(RoomName),
@@ -48,4 +51,17 @@ pub enum HouseError {
 
     #[error("device `{0}` not found into room '{1}'")]
     RoomDeviceNotFound(DeviceName, RoomName),
+
+    #[error("storage action failed with `{0}`")]
+    InternalError(String),
+}
+
+impl HouseError {
+    pub fn str<E: AsRef<str>>(err: E) -> HouseError {
+        InternalError(err.as_ref().to_string())
+    }
+
+    pub fn fmt<E: Debug>(err: E) -> HouseError {
+        InternalError(format!("{0:?}", err))
+    }
 }

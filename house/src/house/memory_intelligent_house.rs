@@ -28,20 +28,19 @@ impl MemoryIntelligentHouse {
 
 #[async_trait]
 impl IntelligentHouse for MemoryIntelligentHouse {
-    async fn get_rooms(&self) -> Vec<RoomName> {
-        self.rooms
-            .read()
-            .iter()
-            .map(|room| room.name.clone())
-            .collect()
+    async fn get_rooms(&self) -> Result<Vec<Room>, HouseError> {
+        Ok(self.rooms.read().iter().cloned().collect())
     }
 
-    async fn get_room(&self, room_name: &RoomName) -> Option<Room> {
-        self.rooms
+    async fn get_room(&self, room_name: &RoomName) -> Result<Room, HouseError> {
+        let room_opt = self
+            .rooms
             .read()
             .iter()
             .find(|r| r.name == *room_name)
-            .cloned()
+            .cloned();
+
+        room_opt.ok_or_else(|| RoomNotFound(room_name.clone()))
     }
 
     async fn add_room(&mut self, room_name: &RoomName) -> Result<(), HouseError> {
@@ -103,7 +102,7 @@ impl IntelligentHouse for MemoryIntelligentHouse {
         &mut self,
         room_name: &RoomName,
         device_name: &DeviceName,
-    ) -> Result<DeviceName, HouseError> {
+    ) -> Result<(), HouseError> {
         let mut rooms = self.rooms.write();
         let room = rooms
             .iter_mut()
@@ -113,7 +112,9 @@ impl IntelligentHouse for MemoryIntelligentHouse {
         room.devices
             .iter()
             .position(|d| d == device_name)
-            .map(|index| room.devices.swap_remove(index))
+            .map(|index| {
+                room.devices.swap_remove(index);
+            })
             .ok_or_else(|| RoomDeviceNotFound(device_name.clone(), room_name.clone()))
     }
 
@@ -121,7 +122,12 @@ impl IntelligentHouse for MemoryIntelligentHouse {
         &self,
         inventory: &T,
     ) -> Result<String, HouseError> {
-        let room_names = self.get_rooms().await;
+        let room_names: Vec<RoomName> = self
+            .get_rooms()
+            .await?
+            .iter()
+            .map(|room| room.name.clone())
+            .collect();
 
         let prefix_msg = format!("'{}' contains {} rooms:\n", self.name.0, room_names.len());
 
