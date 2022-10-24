@@ -24,4 +24,6 @@ pub enum HouseApiError {
     IntelligentHouseError(#[from] IntelligentHouseError),
     #[error("api executing error: {0}")]
     JoinError(#[from] task::JoinError),
+    #[error("IO error: {0}")]
+    ReqError(#[from] reqwest::Error),
 }

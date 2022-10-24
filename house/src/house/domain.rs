@@ -7,13 +7,13 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Display, Clone)]
 pub struct HouseName(pub String);
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Eq, PartialEq, Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Room {
     pub name: RoomName,
     pub devices: Vec<DeviceName>,
 }
 
-#[derive(Eq, PartialEq, Hash, Debug, Clone, Display, Serialize, Deserialize)]
+#[derive(Default, Eq, PartialEq, Hash, Debug, Clone, Display, Serialize, Deserialize)]
 pub struct RoomName(pub String);
 
 #[derive(Eq, PartialEq, Hash, Debug, Clone, Display, Serialize, Deserialize)]

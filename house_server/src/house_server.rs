@@ -23,9 +23,9 @@ use house::inventory::domain::DeviceItem;
 use tcp_exchange::tcp_server::TcpServer;
 use udp_exchange::udp_server::UdpServer;
 
-use crate::domain::{DeviceData, DeviceLocation, RequestBody, RequestMessage, ResponseMessage};
 use crate::domain::RequestBody::*;
 use crate::domain::ResponseBody::*;
+use crate::domain::{DeviceData, DeviceLocation, RequestBody, RequestMessage, ResponseMessage};
 use crate::error::HouseExchangeError;
 
 #[derive(Clone)]
@@ -168,7 +168,7 @@ impl HouseServer {
                         ]),
                     })
                     .await
-                    .map_err(IntelligentHouseError::InventoryError)?;
+                    .map_err(IntelligentHouseError::InventoryErr)?;
 
                 Ok(ResponseMessage {
                     body: DeviceDataChanged,
@@ -181,7 +181,7 @@ impl HouseServer {
                         &DeviceName(location.device_name),
                     )
                     .await
-                    .map_err(IntelligentHouseError::InventoryError)?;
+                    .map_err(IntelligentHouseError::InventoryErr)?;
 
                 Ok(ResponseMessage {
                     body: DeviceDescription(info),
@@ -239,7 +239,7 @@ impl HouseServer {
                 &DeviceName(location.device_name.clone()),
             )
             .await
-            .map_err(IntelligentHouseError::InventoryError)?;
+            .map_err(IntelligentHouseError::InventoryErr)?;
 
         let body = device.fold(hlist![
             |ps: PowerSocket| {

@@ -10,20 +10,20 @@ pub trait IntelligentHouse {
 
     async fn get_room(&self, room_name: &RoomName) -> Result<Room, HouseError>;
 
-    async fn add_room(&mut self, room_name: &RoomName) -> Result<(), HouseError>;
+    async fn add_room(&self, room_name: &RoomName) -> Result<(), HouseError>;
 
-    async fn remove_room(&mut self, room_name: &RoomName) -> Result<(), HouseError>;
+    async fn remove_room(&self, room_name: &RoomName) -> Result<(), HouseError>;
 
     async fn get_devices(&self, room_name: &RoomName) -> Result<Vec<DeviceName>, HouseError>;
 
     async fn add_device(
-        &mut self,
+        &self,
         room_name: &RoomName,
         device_name: &DeviceName,
     ) -> Result<(), HouseError>;
 
     async fn remove_device(
-        &mut self,
+        &self,
         room_name: &RoomName,
         device_name: &DeviceName,
     ) -> Result<(), HouseError>;

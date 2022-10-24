@@ -4,12 +4,12 @@ use anyhow::Result;
 use async_trait::async_trait;
 use tokio::sync::Mutex;
 
-use crate::DeviceItem;
 use crate::errors::intelligent_house_error::IntelligentHouseError;
 use crate::house::domain::*;
 use crate::house::intelligent_house::*;
 use crate::house::memory_intelligent_house::*;
 use crate::inventory::device_inventory::DeviceInventory;
+use crate::DeviceItem;
 
 #[async_trait]
 pub trait DeviceSynchronizer {

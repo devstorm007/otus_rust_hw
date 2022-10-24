@@ -2,8 +2,9 @@ use crate::devices::device_info::DeviceInfo;
 use crate::DeviceName;
 use rand::prelude::ThreadRng;
 use rand::Rng;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Eq, PartialEq, Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct TemperatureSensor {
     pub temperature: i32,
     pub range: SensorRange,
@@ -33,7 +34,7 @@ impl DeviceInfo for TemperatureSensor {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Eq, PartialEq, Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct SensorRange {
     pub min: i32,
     pub max: i32,

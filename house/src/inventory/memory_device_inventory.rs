@@ -5,7 +5,8 @@ use std::sync::Arc;
 use anyhow::Result;
 use async_trait::async_trait;
 use frunk::hlist;
-use parking_lot::RwLock;
+use parking_lot::lock_api::RwLockReadGuard;
+use parking_lot::{RawRwLock, RwLock};
 
 use crate::devices::device_info::DeviceInfo;
 use crate::devices::power_socket::PowerSocket;
@@ -14,7 +15,7 @@ use crate::errors::intelligent_house_error::InventoryError;
 use crate::errors::intelligent_house_error::InventoryError::*;
 use crate::house::domain::*;
 use crate::inventory::device_inventory::DeviceInventory;
-use crate::inventory::domain::DeviceItem;
+use crate::inventory::domain::{DeviceItem, RoomDevices};
 
 #[derive(Default, Clone)]
 pub struct MemoryDeviceInventory {
@@ -38,7 +39,10 @@ impl DeviceInventory for MemoryDeviceInventory {
         room_name: &RoomName,
         device_name: &DeviceName,
     ) -> Result<String, InventoryError> {
-        let room_devices = self.room_devices.read();
+        let room_devices: RwLockReadGuard<
+            RawRwLock,
+            HashMap<RoomName, HashMap<DeviceName, DeviceItem>>,
+        > = self.room_devices.read();
         let device = room_devices
             .get(room_name)
             .and_then(|ds| ds.get(device_name));
@@ -77,8 +81,12 @@ impl DeviceInventory for MemoryDeviceInventory {
             .ok_or_else(|| InventoryRoomNotFound(room_name.clone()))
     }
 
+    async fn get_all_room_devices(&self) -> Result<Vec<RoomDevices>, InventoryError> {
+        todo!()
+    }
+
     async fn add_device(
-        &mut self,
+        &self,
         room_name: &RoomName,
         device_name: &DeviceName,
         device: DeviceItem,
@@ -116,7 +124,7 @@ impl DeviceInventory for MemoryDeviceInventory {
     }
 
     async fn change_device(
-        &mut self,
+        &self,
         room_name: &RoomName,
         device_name: &DeviceName,
         modify: impl Fn(DeviceItem) -> Result<DeviceItem, InventoryError> + Send,

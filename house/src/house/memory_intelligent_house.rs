@@ -43,7 +43,7 @@ impl IntelligentHouse for MemoryIntelligentHouse {
         room_opt.ok_or_else(|| RoomNotFound(room_name.clone()))
     }
 
-    async fn add_room(&mut self, room_name: &RoomName) -> Result<(), HouseError> {
+    async fn add_room(&self, room_name: &RoomName) -> Result<(), HouseError> {
         let mut rooms = self.rooms.write();
         if rooms.iter().any(|r| r.name == *room_name) {
             Err(RoomAlreadyAdded(room_name.clone()))
@@ -56,7 +56,7 @@ impl IntelligentHouse for MemoryIntelligentHouse {
         }
     }
 
-    async fn remove_room(&mut self, room_name: &RoomName) -> Result<(), HouseError> {
+    async fn remove_room(&self, room_name: &RoomName) -> Result<(), HouseError> {
         let mut rooms = self.rooms.write();
         rooms
             .iter()
@@ -77,7 +77,7 @@ impl IntelligentHouse for MemoryIntelligentHouse {
     }
 
     async fn add_device(
-        &mut self,
+        &self,
         room_name: &RoomName,
         device_name: &DeviceName,
     ) -> Result<(), HouseError> {
@@ -99,7 +99,7 @@ impl IntelligentHouse for MemoryIntelligentHouse {
     }
 
     async fn remove_device(
-        &mut self,
+        &self,
         room_name: &RoomName,
         device_name: &DeviceName,
     ) -> Result<(), HouseError> {

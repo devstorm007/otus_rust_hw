@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use futures::stream::StreamExt;
 use futures::{stream, TryStreamExt};
 use mongodb::bson::doc;
-use mongodb::Database;
+use mongodb::{bson, Cursor, Database};
 
 use house::errors::intelligent_house_error::HouseError;
 use house::errors::intelligent_house_error::HouseError::RoomNotFound;
@@ -32,7 +32,7 @@ const ROOMS_TABLE: &str = "rooms";
 #[async_trait]
 impl IntelligentHouse for DbIntelligentHouse {
     async fn get_rooms(&self) -> Result<Vec<Room>, HouseError> {
-        let rooms = self
+        let rooms: Cursor<Room> = self
             .db
             .collection::<Room>(ROOMS_TABLE)
             .find(None, None)
@@ -45,7 +45,7 @@ impl IntelligentHouse for DbIntelligentHouse {
     async fn get_room(&self, room_name: &RoomName) -> Result<Room, HouseError> {
         let room_opt = self
             .db
-            .collection::<Room>("rooms")
+            .collection::<Room>(ROOMS_TABLE)
             .find_one(doc! {"name": room_name.0.as_str()}, None)
             .await
             .map_err(HouseError::fmt)?;
@@ -53,7 +53,7 @@ impl IntelligentHouse for DbIntelligentHouse {
         room_opt.ok_or_else(|| RoomNotFound(room_name.clone()))
     }
 
-    async fn add_room(&mut self, room_name: &RoomName) -> Result<(), HouseError> {
+    async fn add_room(&self, room_name: &RoomName) -> Result<(), HouseError> {
         let room = Room {
             name: room_name.clone(),
             devices: vec![],
@@ -68,7 +68,7 @@ impl IntelligentHouse for DbIntelligentHouse {
         Ok(())
     }
 
-    async fn remove_room(&mut self, room_name: &RoomName) -> Result<(), HouseError> {
+    async fn remove_room(&self, room_name: &RoomName) -> Result<(), HouseError> {
         self.db
             .collection::<Room>(ROOMS_TABLE)
             .delete_one(doc! {"name": room_name.0.as_str()}, None)
@@ -85,13 +85,14 @@ impl IntelligentHouse for DbIntelligentHouse {
     }
 
     async fn add_device(
-        &mut self,
+        &self,
         room_name: &RoomName,
         device_name: &DeviceName,
     ) -> Result<(), HouseError> {
         let mut room = self.get_room(room_name).await?;
         room.devices.push(device_name.clone());
-        let devices_doc = mongodb::bson::to_document(&room.devices).map_err(HouseError::fmt)?;
+
+        let devices_doc = bson::to_bson(&room.devices).map_err(HouseError::fmt)?;
 
         self.db
             .collection::<Room>(ROOMS_TABLE)
@@ -107,7 +108,7 @@ impl IntelligentHouse for DbIntelligentHouse {
     }
 
     async fn remove_device(
-        &mut self,
+        &self,
         room_name: &RoomName,
         device_name: &DeviceName,
     ) -> Result<(), HouseError> {
@@ -118,7 +119,7 @@ impl IntelligentHouse for DbIntelligentHouse {
             .filter(|d| d.0 != device_name.0)
             .collect();
 
-        let devices_doc = mongodb::bson::to_document(&filtered).unwrap();
+        let devices_doc = bson::to_bson(&filtered).unwrap();
 
         self.db
             .collection::<Room>(ROOMS_TABLE)

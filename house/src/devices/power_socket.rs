@@ -1,7 +1,8 @@
 use crate::devices::device_info::DeviceInfo;
 use crate::DeviceName;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Eq, PartialEq, Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct PowerSocket {
     pub tpe: SocketType,
     pub voltage: u32,
@@ -51,7 +52,7 @@ impl DeviceInfo for PowerSocket {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Eq, PartialEq, Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum SocketType {
     A,
     B,
