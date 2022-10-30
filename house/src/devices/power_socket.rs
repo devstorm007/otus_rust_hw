@@ -12,7 +12,11 @@ pub struct PowerSocket {
 
 impl PowerSocket {
     pub fn power(self) -> u32 {
-        self.voltage * self.current
+        if self.enabled {
+            self.voltage * self.current
+        } else {
+            0
+        }
     }
     pub fn enable(&mut self) {
         self.enabled = true;
