@@ -1435,6 +1435,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "house_library"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "exchange_protocol",
+ "frunk",
+ "frunk_core",
+ "futures",
+ "house",
+ "house_server",
+ "iced",
+ "libloading",
+ "tcp_exchange",
+ "thiserror",
+ "tokio",
+ "udp_exchange",
+]
+
+[[package]]
 name = "house_server"
 version = "0.1.0"
 dependencies = [

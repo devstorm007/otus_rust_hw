@@ -1,0 +1,25 @@
+[package]
+name = "house_library"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+iced = "0.4"
+anyhow = "1.0"
+thiserror = "1.0"
+tokio = { version = "1.20.1", features = ["full"] }
+futures = "0.3.24"
+frunk = "0.4.0"
+frunk_core = { version = "0.4.0", features = ["serde"] }
+exchange_protocol = { path = "../exchange_protocol" }
+house_server = { path = "../house_server" }
+tcp_exchange = { path = "../tcp_exchange" }
+udp_exchange = { path = "../udp_exchange" }
+house = { path = "../house" }
+
+[lib]
+crate-type = ["cdylib"]
+
+[dev-dependencies]
+libloading = "0.7.1"
+anyhow = "1.0.44"

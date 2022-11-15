@@ -9,4 +9,5 @@ members = [
     "exchange_protocol",
     "web",
     "gui",
+    "house_library",
 ]
