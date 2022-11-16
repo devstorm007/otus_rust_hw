@@ -67,19 +67,11 @@ impl DeviceInventory {
     }
 
     pub fn get_socket_info(&self, rn: &RoomName, dn: &DeviceName) -> Result<String, anyhow::Error> {
-        //let raw_rn: RawRoomName = rn.try_into()?;
-        //let raw_dn: RawDeviceName = dn.try_into()?;
-        println!(" rn={:?},  dn={:?}", rn, dn);
-
-        let rn_str: &str = rn.0.as_ref();
-        let rn_bytes = rn_str.as_bytes();
-        let rn_cstr = CString::new(rn_bytes)?;
-
-        let dn_str: &str = dn.0.as_ref();
-        let dn_bytes = dn_str.as_bytes();
-        let dn_cstr = CString::new(dn_bytes)?;
-
-        unsafe { Ok(self.lib.get_socket_info(&rn_cstr, &dn_cstr, self.handle)?) }
+        unsafe {
+            Ok(self
+                .lib
+                .get_socket_info(rn.try_into()?, dn.try_into()?, self.handle)?)
+        }
     }
 }
 
@@ -126,16 +118,11 @@ impl Lib {
 
     pub unsafe fn get_socket_info(
         &self,
-        rn: &CStr,
-        dn: &CStr,
+        rn: RawRoomName,
+        dn: RawDeviceName,
         handle: InventoryHandle,
     ) -> Result<String, InventoryError> {
-        println!("functions.get_socket_info about {rn:?}.{dn:?}");
-        let rn_ptr = rn.as_ptr();
-        let dn_ptr = dn.as_ptr();
-
-        let info =
-            (self.functions.get_socket_info)(RawRoomName(rn_ptr), RawDeviceName(dn_ptr), handle);
+        let info = (self.functions.get_socket_info)(rn, dn, handle);
 
         if info.0.is_null() {
             return Err(InventoryError::NullInfo);
@@ -149,7 +136,6 @@ impl Lib {
                 return Err(InventoryError::InfoConvert);
             }
         };
-        //println!("utf8_str: {:?}", utf8_str);
         Ok(utf8_str.to_string())
     }
 
@@ -161,23 +147,28 @@ impl Lib {
 impl<'a> TryFrom<&'a RoomName> for RawRoomName {
     type Error = anyhow::Error;
 
-    fn try_from(rn: &'a RoomName) -> Result<Self, Self::Error> {
-        let x = rn.0.as_str();
+    fn try_from(name: &'a RoomName) -> Result<Self, Self::Error> {
+        let cs = CString::new(name.0.as_str().as_bytes())?;
+        let raw = cs.into_raw();
+        Ok(RawRoomName(raw))
+        /*let x = rn.0.as_str();
         let rn_bytes = x.as_bytes();
         let rn_cs = CString::new(rn_bytes)?;
         let rn_ptr = rn_cs.as_ptr();
-        let name = RawRoomName(rn_ptr);
-        Ok(name)
+        let name = RawRoomName(rn_ptr);*/
     }
 }
 
 impl<'a> TryFrom<&'a DeviceName> for RawDeviceName {
     type Error = anyhow::Error;
 
-    fn try_from(rn: &'a DeviceName) -> Result<Self, Self::Error> {
-        let rn_bytes = rn.0.as_str().as_bytes();
+    fn try_from(name: &'a DeviceName) -> Result<Self, Self::Error> {
+        let cs = CString::new(name.0.as_str().as_bytes())?;
+        let raw = cs.into_raw();
+        Ok(RawDeviceName(raw))
+        /* let rn_bytes = rn.0.as_str().as_bytes();
         let rn_cs = CString::new(rn_bytes)?;
         let rn_ptr = rn_cs.as_ptr();
-        Ok(RawDeviceName(rn_ptr))
+        Ok(RawDeviceName(rn_ptr))*/
     }
 }

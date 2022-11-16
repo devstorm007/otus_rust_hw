@@ -77,22 +77,6 @@ impl<'a> TryFrom<&'a RawDeviceName> for DeviceName {
     }
 }
 
-/*#[repr(transparent)]
-struct RawEnabled(*const c_uint);
-impl<'a> TryFrom<&'a RawEnabled> for bool {
-    type Error = InventoryError;
-
-    fn try_from(value: &'a RawEnabled) -> Result<Self, Self::Error> {
-        if value.0.is_null() {
-            return Err(InventoryError::Parameter);
-        }
-
-        let flag: &u32 = unsafe { value.0.as_ref().unwrap() };
-
-        Ok(*flag == 1u32)
-    }
-}*/
-
 #[repr(u8)]
 #[derive(PartialEq, Eq)]
 pub enum RawEnabled {
@@ -217,54 +201,33 @@ unsafe extern "C" fn get_socket_info(
     device: RawDeviceName,
     handle: InventoryHandle,
 ) -> RawSocketInfo {
-    println!("start get_socket_info");
     if handle.0.is_null() || room.0.is_null() || device.0.is_null() {
-        return mk_info("error:Invalid parameters");
+        return mk_raw_info("error:Invalid parameters");
     }
     let room_name: &RoomName = &(match (&room).try_into() {
         Ok(p) => p,
-        Err(_) => return mk_info("error:Invalid room name"),
+        Err(_) => return mk_raw_info("error:Invalid room name"),
     });
     let device_name: &DeviceName = &(match (&device).try_into() {
         Ok(p) => p,
-        Err(_) => return mk_info("error:Invalid device name"),
+        Err(_) => return mk_raw_info("error:Invalid device name"),
     });
 
-    println!("before inventory");
     let inventory = handle.as_inventory();
 
     match block_on(inventory.get_info(room_name, device_name)) {
-        Ok(info) => {
-            println!("received info about {room_name}.{device_name}: {info}");
-            let res = mk_ok_info(info);
-            let cs_ptr = res.as_ptr();
-            RawSocketInfo(cs_ptr)
-        }
-        Err(e) => mk_info(format!("error:{:?}", e).as_ref()),
+        Ok(info) => mk_raw_info(info.as_ref()),
+        Err(e) => mk_raw_info(format!("error:{:?}", e).as_ref()),
     }
 }
 
-fn mk_info(s: &str) -> RawSocketInfo {
+fn mk_raw_info(s: &str) -> RawSocketInfo {
     if s.starts_with("error:") {
         eprintln!("get_socket_info failed with {s}");
     }
-    let cs = CString::new(s).expect("CString::new failed");
-    let cs_ptr = cs.as_ptr();
-    RawSocketInfo(cs_ptr)
-}
-
-fn mk_ok_info(s: String) -> CString {
-    //let reference = Box::leak(Box::new(s));
-    //let ptr = reference as *mut String;
-    //let bytes = reference.as_bytes();
-
-    let str: &str = s.as_ref();
-    let bytes = str.as_bytes();
-    CString::new(bytes).expect("CString::new failed")
-
-    //let cs = CString::new(s).expect("CString::new failed");
-    //let cs_ptr = cs.as_ptr();
-    //RawSocketInfo(cs_ptr)
+    let c_str_song = CString::new(s.as_bytes()).unwrap();
+    let raw = c_str_song.into_raw();
+    RawSocketInfo(raw)
 }
 
 unsafe extern "C" fn destroy_inventory(handle: InventoryHandle) {

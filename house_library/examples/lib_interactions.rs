@@ -12,18 +12,17 @@ fn main() -> Result<(), Box<dyn Error>> {
     let room_name = &RoomName("kitchen".to_string());
     let device_name = &DeviceName("socket 220V-5A".to_string());
 
-    println!("get_socket_info");
     let initial_info = device_inventory.get_socket_info(room_name, device_name)?;
-    println!("initial info: {initial_info}");
+    println!("initial info: {initial_info}\n");
 
     device_inventory.disable_socket(room_name, device_name)?;
     let disabled_info = device_inventory.get_socket_info(room_name, device_name)?;
-    println!("disabled info: {disabled_info}");
+    println!("info after disable: {disabled_info}\n");
 
     device_inventory.enable_socket(room_name, device_name)?;
     let enabled_info = device_inventory.get_socket_info(room_name, device_name)?;
 
-    println!("enabled info: {enabled_info}");
+    println!("info after enable: {enabled_info}\n");
 
     Ok(())
 }
